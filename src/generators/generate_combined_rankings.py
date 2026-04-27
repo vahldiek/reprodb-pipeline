@@ -528,14 +528,20 @@ def generate_combined_rankings(data_dir: str) -> None:
 
     # Write JSON
     assets_data.mkdir(parents=True, exist_ok=True)
-    for fname, data in [
-        ("combined_rankings.json", combined_all),
-        ("systems_combined_rankings.json", combined_sys),
-        ("security_combined_rankings.json", combined_sec),
-    ]:
-        path = assets_data / fname
-        save_validated_json(path, data, AuthorRanking, indent=None)
-        logger.info(f"  Wrote {path} ({len(data)} entries)")
+
+    # Global (untagged) combined ranking — primary file consumed by /authors page
+    save_validated_json(assets_data / "combined_rankings.json", combined_all, AuthorRanking, indent=None)
+    logger.info(f"  Wrote {assets_data / 'combined_rankings.json'} ({len(combined_all)} entries)")
+
+    # Scoped consolidation — single file containing per-area + per-conference rankings.
+    # Replaces 16 separate files (systems_*, security_*, {conf}_*). Each row has a `scope`
+    # field; the website filters client-side via ReproDB.filterByScope().
+    def _tag(entries: list[dict], scope: str) -> list[dict]:
+        return [{**e, "scope": scope} for e in entries]
+
+    scoped_rows: list[dict] = []
+    scoped_rows.extend(_tag(combined_sys, "systems"))
+    scoped_rows.extend(_tag(combined_sec, "security"))
 
     # ── Per-conference combined rankings ──────────────────────────────────
     # Discover conferences from {conf}_conf_authors.json files in _build/
@@ -597,10 +603,14 @@ def generate_combined_rankings(data_dir: str) -> None:
         except NameError:
             pass
 
-        fname = f"{conf_lower}_combined_rankings.json"
-        path = assets_data / fname
-        save_validated_json(path, conf_combined, AuthorRanking, indent=None)
-        logger.info(f"  Wrote {path} ({len(conf_combined)} entries)")
+        # Append to consolidated scoped output instead of writing per-conf file
+        scoped_rows.extend(_tag(conf_combined, conf_lower))
+
+    # Write the single consolidated scoped file (replaces 16 per-area/per-conf files).
+    save_validated_json(assets_data / "combined_rankings_scoped.json", scoped_rows, AuthorRanking, indent=None)
+    logger.info(
+        f"  Wrote {assets_data / 'combined_rankings_scoped.json'} ({len(scoped_rows)} entries across all scopes)"
+    )
 
     # Summary YAML
     # Count people who have both artifacts AND AE service

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TopAuthor(BaseModel):
@@ -32,6 +32,14 @@ class InstitutionRanking(BaseModel):
     """Ranking entry for a single institution aggregating artifact and AE service metrics."""
 
     affiliation: str = Field(description="Normalized institution name.")
+    scope: str | None = Field(
+        default=None,
+        description=(
+            "Optional scope tag: an area name ('systems', 'security') or a conference key "
+            "(e.g. 'osdi'). Absent for the global ranking; present in "
+            "institution_rankings_scoped.json."
+        ),
+    )
     combined_score: int = Field(
         ge=3,
         description="Total score combining artifact_score, citation_score, and ae_score.",
@@ -69,8 +77,16 @@ class InstitutionRanking(BaseModel):
     conferences: list[str] = Field(description="List of conferences where the institution contributes.")
     years: dict[str, int] = Field(description="Mapping of year (as string) to activity count.")
     top_authors: list[TopAuthor] = Field(
+        default_factory=list,
         max_length=20,
         description="Top 20 authors from this institution, sorted by combined_score.",
     )
+
+    @field_validator("years", mode="before")
+    @classmethod
+    def _coerce_year_keys(cls, v: object) -> object:
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
 
     model_config = {"extra": "forbid"}

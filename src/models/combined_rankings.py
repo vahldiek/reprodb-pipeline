@@ -6,13 +6,20 @@ Variants: ``systems_combined_rankings.json``, ``security_combined_rankings.json`
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AuthorRanking(BaseModel):
     """Ranking entry for a single author combining artifact contributions and AE committee service."""
 
     rank: int = Field(ge=1, description="Ranking position (with ties).")
+    scope: str | None = Field(
+        default=None,
+        description=(
+            "Optional scope tag: an area name ('systems', 'security') or a conference key "
+            "(e.g. 'osdi'). Absent for the global ranking; present in combined_rankings_scoped.json."
+        ),
+    )
     author_id: int | None = Field(
         default=None,
         ge=1,
@@ -50,5 +57,12 @@ class AuthorRanking(BaseModel):
     years: dict[str, int] = Field(description="Year-to-activity-count mapping.")
     first_year: int | None = Field(default=None, description="Earliest year of activity.")
     last_year: int | None = Field(default=None, description="Most recent year of activity.")
+
+    @field_validator("years", mode="before")
+    @classmethod
+    def _coerce_year_keys(cls, v: object) -> object:
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
 
     model_config = {"extra": "forbid"}
