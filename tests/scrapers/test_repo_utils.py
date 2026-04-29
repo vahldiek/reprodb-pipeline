@@ -169,7 +169,7 @@ class TestCachedZenodoStats:
         stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/12345")
         assert stats["linked_github_urls"] == ["https://github.com/owner/repo"]
 
-    def test_no_linked_github_urls_omits_key(self, mock_session):
+    def test_no_linked_github_urls_stores_empty_list(self, mock_session):
         mock_session.get.return_value = _fake_response(
             200,
             json_data={
@@ -179,7 +179,7 @@ class TestCachedZenodoStats:
             },
         )
         stats = repo_utils.cached_zenodo_stats("https://zenodo.org/records/99999")
-        assert "linked_github_urls" not in stats
+        assert stats["linked_github_urls"] == []
 
     def test_unparseable_url_returns_none(self, mock_session):
         result = repo_utils.cached_zenodo_stats("https://zenodo.org/badge/latestdoi/123")

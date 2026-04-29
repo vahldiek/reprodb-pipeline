@@ -375,7 +375,13 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
     """Fetch Zenodo record stats with caching and 429 retry."""
     cached = _read_cache(CACHE_DIR, url, ttl=ttl, namespace="zenodo_stats")
     if cached is not _MISSING:
-        return cached
+        # Stale entries cached before linked_github_urls extraction was
+        # added lack the key entirely.  Force a re-fetch so we discover
+        # GitHub repos linked from Zenodo metadata.
+        if isinstance(cached, dict) and "linked_github_urls" not in cached:
+            pass  # fall through to re-fetch
+        else:
+            return cached
 
     rec = _resolve_zenodo_record_id(url)
     if rec is None:
@@ -395,10 +401,10 @@ def cached_zenodo_stats(url: str, ttl: int = CACHE_TTL_STATS) -> dict[str, Any]:
                     "updated_at": record.get("updated", ""),
                     "created_at": record.get("created", ""),
                 }
-                # Extract linked GitHub URLs from related_identifiers
-                linked = _extract_github_urls_from_zenodo(record)
-                if linked:
-                    result["linked_github_urls"] = linked
+                # Extract linked GitHub URLs from related_identifiers.
+                # Always store the key (even empty) so the cache can
+                # distinguish "checked, no links" from "never checked".
+                result["linked_github_urls"] = _extract_github_urls_from_zenodo(record)
                 break
             if resp.status_code == 429:
                 retry_after = int(resp.headers.get("Retry-After", 0))
