@@ -647,6 +647,81 @@ def main():
         save_json(detail_path, detail_repos)
         logger.info(f"Written per-repo detail ({len(aggregated.get('all_github_repos', []))} repos) to {detail_path}")
 
+        # Write top_repos.json files — global top repos sorted by stars, split by area.
+        # The per-conference top_repos (enriched with badges/authors) are collected,
+        # then all repos from all_github_repos are ranked globally.
+        all_repos = aggregated.get("all_github_repos", [])
+
+        def _build_top_repos(repos, limit=50):
+            """Build a sorted top-repos list from all_github_repos entries."""
+            top = sorted(repos, key=lambda x: x.get("stars", 0), reverse=True)[:limit]
+            result = []
+            for r in top:
+                url = r.get("url", "")
+                # Extract github_org from URL
+                org = ""
+                if "github.com/" in url:
+                    parts = url.split("github.com/", 1)[-1].split("/")
+                    if parts:
+                        org = parts[0]
+                # Derive last_active from pushed_at
+                pushed = r.get("pushed_at", "") or ""
+                last_active = pushed[:7] if pushed else ""  # YYYY-MM
+                # Get badges/authors — may have been set by _enrich_top_repos on
+                # the by_conference top_repos, but all_github_repos entries won't
+                # have them.  Fall back to empty.
+                badges_val = r.get("badges", "")
+                if isinstance(badges_val, list):
+                    badges_val = ",".join(badges_val)
+                authors_val = r.get("authors", "")
+                if isinstance(authors_val, list):
+                    authors_val = ", ".join(authors_val[:5])
+                    if len(r.get("authors", [])) > 5:
+                        authors_val += " et al."
+                result.append(
+                    {
+                        "title": r.get("title", "Unknown"),
+                        "url": url,
+                        "year": r.get("year", 0),
+                        "stars": r.get("stars", 0),
+                        "forks": r.get("forks", 0),
+                        "authors": authors_val,
+                        "github_org": org,
+                        "badges": badges_val,
+                        "last_active": last_active,
+                        "description": r.get("description", ""),
+                        "language": r.get("language", ""),
+                        "conference": r.get("conference", ""),
+                        "area": r.get("area", ""),
+                    }
+                )
+            return result
+
+        # Enrich all_github_repos with badges/authors from the by_conference enrichment
+        badge_author_lookup: dict[str, dict] = {}
+        for conf in aggregated.get("by_conference", []):
+            for repo in conf.get("top_repos", []):
+                key = _normalize_title(repo.get("title", ""))
+                if key:
+                    badge_author_lookup[key] = repo
+        for r in all_repos:
+            key = _normalize_title(r.get("title", ""))
+            if key and key in badge_author_lookup:
+                enriched_repo = badge_author_lookup[key]
+                if "badges" in enriched_repo and "badges" not in r:
+                    r["badges"] = enriched_repo["badges"]
+                if "authors" in enriched_repo and "authors" not in r:
+                    r["authors"] = enriched_repo["authors"]
+
+        all_top = _build_top_repos(all_repos)
+        sys_top = _build_top_repos([r for r in all_repos if r.get("area") == "systems"])
+        sec_top = _build_top_repos([r for r in all_repos if r.get("area") == "security"])
+
+        save_json(assets_dir / "top_repos.json", all_top)
+        save_json(assets_dir / "systems_top_repos.json", sys_top)
+        save_json(assets_dir / "security_top_repos.json", sec_top)
+        logger.info(f"Written top repos: all={len(all_top)}, systems={len(sys_top)}, security={len(sec_top)}")
+
         # Write repo_stats_yearly.json — per-year stats split by area (all/systems/security)
         # Used by website repo_stats pages as a downloadable data file
         yearly_path = assets_dir / "repo_stats_yearly.json"
