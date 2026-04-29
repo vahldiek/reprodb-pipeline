@@ -8,3 +8,9 @@
 
 - llvm/llvm-project
 - chromium/chromium
+- huggingface/diffusers
+- facebook/zstd
+- conda-forge/miniforge
+- kohya-ss/sd-scripts
+- cuckoosandbox/cuckoo
+- open-mmlab/OpenPCDet
