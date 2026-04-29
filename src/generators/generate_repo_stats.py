@@ -404,6 +404,18 @@ def aggregate_stats(all_stats):
         overall["avg_forks"] = round(overall["total_forks"] / overall["github_repos"], 1)
         overall["median_stars"] = round(statistics.median(overall_star_values), 1)
         overall["median_forks"] = round(statistics.median(overall_fork_values), 1)
+        if len(overall_star_values) >= 2:
+            q_stars = statistics.quantiles(overall_star_values, n=4)
+            q_forks = statistics.quantiles(overall_fork_values, n=4)
+            overall["p25_stars"] = round(q_stars[0], 1)
+            overall["p75_stars"] = round(q_stars[2], 1)
+            overall["p25_forks"] = round(q_forks[0], 1)
+            overall["p75_forks"] = round(q_forks[2], 1)
+        else:
+            overall["p25_stars"] = overall["median_stars"]
+            overall["p75_stars"] = overall["median_stars"]
+            overall["p25_forks"] = overall["median_forks"]
+            overall["p75_forks"] = overall["median_forks"]
 
     # Convert to serializable format
     conf_stats = []
@@ -416,11 +428,35 @@ def aggregate_stats(all_stats):
         conf_fork_vals = sorted(e["forks"] for e in d["all_github_entries"])
         median_stars = round(statistics.median(conf_star_vals), 1) if conf_star_vals else 0
         median_forks = round(statistics.median(conf_fork_vals), 1) if conf_fork_vals else 0
+        if len(conf_star_vals) >= 2:
+            q_stars = statistics.quantiles(conf_star_vals, n=4)
+            q_forks = statistics.quantiles(conf_fork_vals, n=4)
+            p25_stars = round(q_stars[0], 1)
+            p75_stars = round(q_stars[2], 1)
+            p25_forks = round(q_forks[0], 1)
+            p75_forks = round(q_forks[2], 1)
+        else:
+            p25_stars = median_stars
+            p75_stars = median_stars
+            p25_forks = median_forks
+            p75_forks = median_forks
         year_list = []
         for yr in sorted(d["years"].keys()):
             yd = d["years"][yr]
             yr_median_stars = round(statistics.median(yd["_star_values"]), 1) if yd["_star_values"] else 0
             yr_median_forks = round(statistics.median(yd["_fork_values"]), 1) if yd["_fork_values"] else 0
+            if len(yd["_star_values"]) >= 2:
+                yr_q_stars = statistics.quantiles(yd["_star_values"], n=4)
+                yr_q_forks = statistics.quantiles(yd["_fork_values"], n=4)
+                yr_p25_stars = round(yr_q_stars[0], 1)
+                yr_p75_stars = round(yr_q_stars[2], 1)
+                yr_p25_forks = round(yr_q_forks[0], 1)
+                yr_p75_forks = round(yr_q_forks[2], 1)
+            else:
+                yr_p25_stars = yr_median_stars
+                yr_p75_stars = yr_median_stars
+                yr_p25_forks = yr_median_forks
+                yr_p75_forks = yr_median_forks
             year_list.append(
                 {
                     "year": yr,
@@ -431,6 +467,10 @@ def aggregate_stats(all_stats):
                     "avg_forks": round(yd["forks"] / yd["github_repos"], 1) if yd["github_repos"] > 0 else 0,
                     "median_stars": yr_median_stars,
                     "median_forks": yr_median_forks,
+                    "p25_stars": yr_p25_stars,
+                    "p75_stars": yr_p75_stars,
+                    "p25_forks": yr_p25_forks,
+                    "p75_forks": yr_p75_forks,
                 }
             )
         # Top 5 repos by stars
@@ -445,6 +485,10 @@ def aggregate_stats(all_stats):
                 "avg_forks": avg_forks,
                 "median_stars": median_stars,
                 "median_forks": median_forks,
+                "p25_stars": p25_stars,
+                "p75_stars": p75_stars,
+                "p25_forks": p25_forks,
+                "p75_forks": p75_forks,
                 "max_stars": d["max_stars"],
                 "max_forks": d["max_forks"],
                 "years": year_list,
@@ -459,6 +503,18 @@ def aggregate_stats(all_stats):
         avg_forks = round(d["total_forks"] / d["github_repos"], 1) if d["github_repos"] > 0 else 0
         median_stars = round(statistics.median(d["_star_values"]), 1) if d["_star_values"] else 0
         median_forks = round(statistics.median(d["_fork_values"]), 1) if d["_fork_values"] else 0
+        if len(d["_star_values"]) >= 2:
+            q_stars = statistics.quantiles(d["_star_values"], n=4)
+            q_forks = statistics.quantiles(d["_fork_values"], n=4)
+            yr_p25_stars = round(q_stars[0], 1)
+            yr_p75_stars = round(q_stars[2], 1)
+            yr_p25_forks = round(q_forks[0], 1)
+            yr_p75_forks = round(q_forks[2], 1)
+        else:
+            yr_p25_stars = median_stars
+            yr_p75_stars = median_stars
+            yr_p25_forks = median_forks
+            yr_p75_forks = median_forks
         year_stats.append(
             {
                 "year": yr,
@@ -469,6 +525,10 @@ def aggregate_stats(all_stats):
                 "avg_forks": avg_forks,
                 "median_stars": median_stars,
                 "median_forks": median_forks,
+                "p25_stars": yr_p25_stars,
+                "p75_stars": yr_p75_stars,
+                "p25_forks": yr_p25_forks,
+                "p75_forks": yr_p75_forks,
                 "max_stars": d["max_stars"],
                 "max_forks": d["max_forks"],
             }
@@ -758,6 +818,18 @@ def main():
             if area_repos:
                 area_stars = [r.get("stars", 0) for r in area_repos]
                 area_forks = [r.get("forks", 0) for r in area_repos]
+                if len(area_stars) >= 2:
+                    q_stars = statistics.quantiles(area_stars, n=4)
+                    q_forks = statistics.quantiles(area_forks, n=4)
+                    area_p25_stars = round(q_stars[0], 1)
+                    area_p75_stars = round(q_stars[2], 1)
+                    area_p25_forks = round(q_forks[0], 1)
+                    area_p75_forks = round(q_forks[2], 1)
+                else:
+                    area_p25_stars = round(statistics.median(area_stars), 1)
+                    area_p75_stars = area_p25_stars
+                    area_p25_forks = round(statistics.median(area_forks), 1)
+                    area_p75_forks = area_p25_forks
                 by_area.append({
                     "name": area_name,
                     "github_repos": len(area_repos),
@@ -765,6 +837,10 @@ def main():
                     "total_forks": sum(area_forks),
                     "median_stars": round(statistics.median(area_stars), 1),
                     "median_forks": round(statistics.median(area_forks), 1),
+                    "p25_stars": area_p25_stars,
+                    "p75_stars": area_p75_stars,
+                    "p25_forks": area_p25_forks,
+                    "p75_forks": area_p75_forks,
                     "max_stars": max(area_stars),
                 })
         yaml_data["by_area"] = by_area
