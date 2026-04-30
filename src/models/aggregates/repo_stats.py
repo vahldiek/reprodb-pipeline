@@ -182,6 +182,12 @@ class ConferenceRepoStats(BaseModel):
     avg_forks: float = Field(ge=0, description="Mean fork count per repository for this conference.", examples=[65.3])
     max_stars: int = Field(ge=0, description="Maximum star count among all repos for this conference.", examples=[5200])
     max_forks: int = Field(ge=0, description="Maximum fork count among all repos for this conference.", examples=[1300])
+    median_stars: float = Field(default=0, ge=0, description="Median star count per repository for this conference.", examples=[25.0])
+    median_forks: float = Field(default=0, ge=0, description="Median fork count per repository for this conference.", examples=[6.0])
+    p25_stars: float = Field(default=0, ge=0, description="25th percentile of stars for this conference.", examples=[8.0])
+    p75_stars: float = Field(default=0, ge=0, description="75th percentile of stars for this conference.", examples=[80.0])
+    p25_forks: float = Field(default=0, ge=0, description="25th percentile of forks for this conference.", examples=[2.0])
+    p75_forks: float = Field(default=0, ge=0, description="75th percentile of forks for this conference.", examples=[18.0])
     years: list[ConferenceYearStats] = Field(
         default_factory=list,
         description="Per-year repository metrics, ordered chronologically.",
@@ -226,6 +232,12 @@ class YearRepoStats(BaseModel):
         description="Mean fork count per repository. Null if not computed.",
         examples=[65.3],
     )
+    median_stars: float = Field(default=0, ge=0, description="Median star count per repository for this year.", examples=[25.0])
+    median_forks: float = Field(default=0, ge=0, description="Median fork count per repository for this year.", examples=[6.0])
+    p25_stars: float = Field(default=0, ge=0, description="25th percentile of stars for this year.", examples=[8.0])
+    p75_stars: float = Field(default=0, ge=0, description="75th percentile of stars for this year.", examples=[80.0])
+    p25_forks: float = Field(default=0, ge=0, description="25th percentile of forks for this year.", examples=[2.0])
+    p75_forks: float = Field(default=0, ge=0, description="75th percentile of forks for this year.", examples=[18.0])
 
     model_config = {"extra": "forbid"}
 

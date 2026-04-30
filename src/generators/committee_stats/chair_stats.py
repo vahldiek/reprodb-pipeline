@@ -13,6 +13,18 @@ from __future__ import annotations
 import logging
 from collections import Counter, defaultdict
 
+from .classification import (
+    COUNTRY_TO_CONTINENT,
+    _build_university_index,
+    _clean_affiliation,
+    classify_member,
+)
+
+try:
+    from pytrie import Trie
+except ImportError:  # pragma: no cover
+    Trie = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +82,9 @@ def compute_chair_stats(
     # ── Year-over-year trends ────────────────────────────────────────────────
     year_trends = _compute_year_trends(chairs_all)
 
+    # ── Geographic diversity ─────────────────────────────────────────────────
+    geographic = _compute_geographic(chairs_all)
+
     # ── Summary ──────────────────────────────────────────────────────────────
     summary = {
         "total_chairs": len(chairs_all),
@@ -82,6 +97,8 @@ def compute_chair_stats(
         "pipeline_promoted_pct": pipeline["promoted_pct"],
         "pipeline_avg_years": pipeline["avg_years_to_chair"],
         "avg_chairs_per_edition": round(sum(t["chair_count"] for t in chair_teams) / max(len(chair_teams), 1), 1),
+        "total_countries": geographic["total_countries"],
+        "total_continents": geographic["total_continents"],
         "year_trends": year_trends,
     }
 
@@ -100,6 +117,7 @@ def compute_chair_stats(
         "pipeline": pipeline,
         "retention": retention,
         "cross_conference": cross_conference,
+        "geographic": geographic,
     }
 
 
@@ -109,6 +127,10 @@ def _extract_chairs(members: list) -> list:
     Returns list sorted by (-chair_count, -total_memberships, name).
     Each record includes additional chair-specific fields.
     """
+    # Build classification index once
+    name_index = _build_university_index()
+    prefix_tree = Trie(**name_index) if Trie else None
+
     chairs = []
     for m in members:
         if m.get("chair_count", 0) < 1:
@@ -131,10 +153,22 @@ def _extract_chairs(members: list) -> list:
         )
         years_to_chair = (first_chair_year - first_member_year) if promoted_from_member else None
 
+        # Classify affiliation to country
+        country = None
+        continent = None
+        aff = m.get("affiliation", "")
+        if aff and prefix_tree:
+            cleaned = _clean_affiliation(aff)
+            country, _ = classify_member(cleaned, prefix_tree, name_index)
+            if country:
+                continent = COUNTRY_TO_CONTINENT.get(country, "Unknown")
+
         entry = {
             "name": m["name"],
             "display_name": m.get("display_name", m["name"]),
             "affiliation": m.get("affiliation", ""),
+            "country": country,
+            "continent": continent,
             "total_memberships": m["total_memberships"],
             "chair_count": m["chair_count"],
             "member_count": m["total_memberships"] - m["chair_count"],
@@ -293,3 +327,35 @@ def _compute_year_trends(chairs: list) -> list:
         }
         for y in all_years
     ]
+
+
+def _compute_geographic(chairs: list) -> dict:
+    """Compute geographic diversity of chairs.
+
+    Returns dict with:
+    - total_countries: number of distinct countries
+    - total_continents: number of distinct continents
+    - by_country: list of {name, count} sorted desc
+    - by_continent: list of {name, count} sorted desc
+    - unclassified: list of {name, affiliation} for chairs we couldn't classify
+    """
+    country_counts: Counter = Counter()
+    continent_counts: Counter = Counter()
+    unclassified = []
+
+    for c in chairs:
+        country = c.get("country")
+        continent = c.get("continent")
+        if country:
+            country_counts[country] += 1
+            continent_counts[continent or "Unknown"] += 1
+        else:
+            unclassified.append({"name": c["display_name"], "affiliation": c.get("affiliation", "")})
+
+    return {
+        "total_countries": len(country_counts),
+        "total_continents": len(continent_counts),
+        "by_country": [{"name": k, "count": v} for k, v in country_counts.most_common()],
+        "by_continent": [{"name": k, "count": v} for k, v in continent_counts.most_common()],
+        "unclassified": unclassified,
+    }

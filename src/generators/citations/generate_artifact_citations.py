@@ -16,7 +16,6 @@ import os
 import re
 from pathlib import Path
 
-from src.utils.normalization.artifact_urls import get_artifact_urls
 from src.utils.apis.citation_apis import (
     best_citation_count,
     create_session,
@@ -28,6 +27,7 @@ from src.utils.apis.citation_apis import (
     s2_reachable,
 )
 from src.utils.io.io import load_json, save_json
+from src.utils.normalization.artifact_urls import get_artifact_urls
 
 logger = logging.getLogger(__name__)
 

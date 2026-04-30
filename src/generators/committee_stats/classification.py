@@ -168,6 +168,15 @@ def _build_university_index() -> dict:
             {"name": "telefonica research", "country": "Spain"},
             {"name": "csiro's data61", "country": "Australia"},
             {"name": "csiro data61", "country": "Australia"},
+            # Additional overrides for AE chairs
+            {"name": "max planck society", "country": "Germany"},
+            {"name": "databricks", "country": "United States"},
+            {"name": "university of modena and reggio emilia", "country": "Italy"},
+            {"name": "exostellar", "country": "United States"},
+            {"name": "grenoble inp", "country": "France"},
+            {"name": "qualcomm", "country": "United States"},
+            {"name": "isovalent", "country": "Switzerland"},
+            {"name": "intel", "country": "United States"},
         ]
     )
 
