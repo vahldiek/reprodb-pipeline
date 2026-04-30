@@ -88,11 +88,19 @@ class ChairStatsSummary(BaseModel):
     total_chairs_security: int = Field(ge=0, description="Unique chairs at security conferences.", examples=[30])
     repeat_chairs: int = Field(ge=0, description="Chairs who chaired 2+ times.", examples=[23])
     repeat_chairs_pct: float = Field(ge=0, description="Percentage of repeat chairs.", examples=[28.0])
+    repeat_chairs_systems: int = Field(ge=0, description="Repeat chairs at systems conferences.", examples=[16])
+    repeat_chairs_security: int = Field(ge=0, description="Repeat chairs at security conferences.", examples=[8])
     cross_conference_chairs: int = Field(ge=0, description="Chairs spanning multiple series.", examples=[13])
     pipeline_promoted: int = Field(ge=0, description="Chairs promoted from member role.", examples=[31])
     pipeline_promoted_pct: float = Field(ge=0, description="Percentage promoted from member.", examples=[37.8])
     pipeline_avg_years: float = Field(ge=0, description="Avg years from member to chair.", examples=[2.7])
     avg_chairs_per_edition: float = Field(ge=0, description="Average co-chairs per conference edition.", examples=[2.2])
+    avg_chairs_per_edition_systems: float = Field(
+        ge=0, description="Average co-chairs per edition at systems conferences.", examples=[2.3]
+    )
+    avg_chairs_per_edition_security: float = Field(
+        ge=0, description="Average co-chairs per edition at security conferences.", examples=[2.0]
+    )
     total_countries: int = Field(ge=0, description="Number of distinct countries represented by chairs.", examples=[15])
     total_continents: int = Field(
         ge=0, description="Number of distinct continents represented by chairs.", examples=[4]

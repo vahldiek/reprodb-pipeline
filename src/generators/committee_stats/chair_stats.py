@@ -63,6 +63,8 @@ def compute_chair_stats(
 
     # ── Retention / repeat chairing ──────────────────────────────────────────
     retention = _compute_retention(chairs_all)
+    retention_systems = _compute_retention(chairs_systems)
+    retention_security = _compute_retention(chairs_security)
 
     # ── Cross-conference chairs ──────────────────────────────────────────────
     cross_conference = _compute_cross_conference(chairs_all)
@@ -73,6 +75,10 @@ def compute_chair_stats(
     # ── Geographic diversity ─────────────────────────────────────────────────
     geographic = _compute_geographic(chairs_all)
 
+    # ── Per-area chair teams for avg computation ─────────────────────────────
+    chair_teams_systems = _compute_chair_teams(chairs_systems)
+    chair_teams_security = _compute_chair_teams(chairs_security)
+
     # ── Summary ──────────────────────────────────────────────────────────────
     summary = {
         "total_chairs": len(chairs_all),
@@ -80,11 +86,19 @@ def compute_chair_stats(
         "total_chairs_security": len(chairs_security),
         "repeat_chairs": retention["repeat_count"],
         "repeat_chairs_pct": round(100 * retention["repeat_count"] / max(len(chairs_all), 1), 1),
+        "repeat_chairs_systems": retention_systems["repeat_count"],
+        "repeat_chairs_security": retention_security["repeat_count"],
         "cross_conference_chairs": len(cross_conference),
         "pipeline_promoted": pipeline["promoted_count"],
         "pipeline_promoted_pct": pipeline["promoted_pct"],
         "pipeline_avg_years": pipeline["avg_years_to_chair"],
         "avg_chairs_per_edition": round(sum(t["chair_count"] for t in chair_teams) / max(len(chair_teams), 1), 1),
+        "avg_chairs_per_edition_systems": round(
+            sum(t["chair_count"] for t in chair_teams_systems) / max(len(chair_teams_systems), 1), 1
+        ),
+        "avg_chairs_per_edition_security": round(
+            sum(t["chair_count"] for t in chair_teams_security) / max(len(chair_teams_security), 1), 1
+        ),
         "total_countries": geographic["total_countries"],
         "total_continents": geographic["total_continents"],
         "year_trends": year_trends,
