@@ -98,8 +98,6 @@ def compute_chair_stats(
 
     return {
         "chairs_all": chairs_all,
-        "chairs_systems": chairs_systems,
-        "chairs_security": chairs_security,
         "summary": summary,
         "chair_teams": chair_teams,
         "pipeline": pipeline,

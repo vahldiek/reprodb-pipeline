@@ -13,11 +13,9 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from src.utils.io.io import save_validated_json, save_yaml
-
 from src.models import SCHEMA_VERSION
-from src.models.artifacts.artifacts import Artifact
 from src.models.aggregates.summary import Summary
+from src.models.artifacts.artifacts import Artifact
 from src.scrapers.acm_scrape import (
     get_acm_conferences,
 )
@@ -30,6 +28,7 @@ from src.scrapers.acm_scrape import (
 from src.scrapers.parse_results_md import get_ae_results
 from src.scrapers.repo_utils import get_conferences_from_prefix
 from src.scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
+from src.utils.io.io import save_validated_json, save_yaml
 from src.utils.normalization.conference import CONF_DISPLAY_NAMES, ensure_conference_pages
 from src.utils.normalization.conference import parse_conf_year as extract_conference_name
 

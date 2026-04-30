@@ -6,9 +6,8 @@ import logging
 import re
 from pathlib import Path
 
-from src.utils.io.io import load_json, resolve_data_path, save_validated_json
-
 from src.models.artifacts.search_data import SearchEntry
+from src.utils.io.io import load_json, resolve_data_path, save_validated_json
 
 logger = logging.getLogger(__name__)
 

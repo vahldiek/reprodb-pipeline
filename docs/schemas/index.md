@@ -5,57 +5,57 @@ in `src/models/`. JSON Schema files are auto-generated from these models.
 
 ## Models
 
-::: src.models.artifacts
+::: src.models.artifacts.artifacts
     options:
       show_root_heading: true
       members: [Artifact]
 
-::: src.models.summary
+::: src.models.aggregates.summary
     options:
       show_root_heading: true
       members: [Summary]
 
-::: src.models.artifacts_by_conference
+::: src.models.aggregates.artifacts_by_conference
     options:
       show_root_heading: true
       members: [ConferenceEntry, YearBreakdown]
 
-::: src.models.artifacts_by_year
+::: src.models.aggregates.artifacts_by_year
     options:
       show_root_heading: true
       members: [YearCount]
 
-::: src.models.author_index
+::: src.models.authors.author_index
     options:
       show_root_heading: true
       members: [AuthorIndexEntry, AffiliationHistoryEntry, ExternalIds]
 
-::: src.models.author_stats
+::: src.models.authors.author_stats
     options:
       show_root_heading: true
       members: [AuthorStats, ArtifactPaper, PlainPaper]
 
-::: src.models.paper_index
+::: src.models.artifacts.paper_index
     options:
       show_root_heading: true
       members: [Paper]
 
-::: src.models.combined_rankings
+::: src.models.authors.combined_rankings
     options:
       show_root_heading: true
       members: [AuthorRanking]
 
-::: src.models.institution_rankings
+::: src.models.institutions.institution_rankings
     options:
       show_root_heading: true
       members: [InstitutionRanking, TopAuthor]
 
-::: src.models.repo_stats
+::: src.models.aggregates.repo_stats
     options:
       show_root_heading: true
       members: [RepoStatsEntry, RepoStatsSummary, OverallStats, ConferenceRepoStats, YearRepoStats]
 
-::: src.models.search_data
+::: src.models.artifacts.search_data
     options:
       show_root_heading: true
       members: [SearchEntry]

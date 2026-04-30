@@ -220,14 +220,6 @@ def generate_committee_data(conf_regex: str, output_dir):
         save_json(chairs_all_path, chair_data["chairs_all"])
         logger.info(f"  Wrote {chairs_all_path} ({len(chair_data['chairs_all'])} chairs)")
 
-        chairs_sys_path = output_dir / "assets/data/systems_ae_chairs.json"
-        save_json(chairs_sys_path, chair_data["chairs_systems"])
-        logger.info(f"  Wrote {chairs_sys_path} ({len(chair_data['chairs_systems'])} chairs)")
-
-        chairs_sec_path = output_dir / "assets/data/security_ae_chairs.json"
-        save_json(chairs_sec_path, chair_data["chairs_security"])
-        logger.info(f"  Wrote {chairs_sec_path} ({len(chair_data['chairs_security'])} chairs)")
-
         chair_stats_path = output_dir / "assets/data/chair_stats.json"
         save_json(
             chair_stats_path,

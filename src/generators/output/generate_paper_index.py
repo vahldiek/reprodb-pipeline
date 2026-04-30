@@ -13,10 +13,9 @@ import argparse
 import logging
 from pathlib import Path
 
-from src.utils.normalization.conference import normalize_title
-from src.utils.io.io import load_json, load_yaml, save_json, save_validated_json
-
 from src.models.artifacts.paper_index import Paper
+from src.utils.io.io import load_json, load_yaml, save_json, save_validated_json
+from src.utils.normalization.conference import normalize_title
 
 logger = logging.getLogger(__name__)
 

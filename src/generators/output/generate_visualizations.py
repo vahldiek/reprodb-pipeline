@@ -13,9 +13,9 @@ import matplotlib
 
 logger = logging.getLogger(__name__)
 matplotlib.use("Agg")  # Use non-interactive backend
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
-from src.utils.io.io import load_json, load_yaml
+from src.utils.io.io import load_json, load_yaml  # noqa: E402
 
 
 def load_data(data_dir):

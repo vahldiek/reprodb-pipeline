@@ -41,7 +41,6 @@ plugins:
         python:
           paths: [.]
           options:
-            allow_inspection: false
             show_source: true
             show_root_heading: true
             heading_level: 2

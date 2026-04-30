@@ -34,8 +34,6 @@ for path in sorted(src.rglob("*.py")):
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
         fd.write(f"# {parts[-1]}\n\n")
         fd.write(f"::: {python_path}\n")
-        fd.write("    options:\n")
-        fd.write("      on_error: warn\n")
 
     mkdocs_gen_files.set_edit_path(full_doc_path, path.as_posix())
 
