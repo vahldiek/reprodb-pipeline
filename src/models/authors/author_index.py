@@ -67,8 +67,16 @@ class AuthorIndexEntry(BaseModel):
         examples=["ETH Zurich"],
     )
     affiliation_source: Literal[
-        "csrankings", "dblp", "openalex", "crossref", "crossref_doi",
-        "openalex_title", "ae_committee", "s2_title", "manual", ""
+        "csrankings",
+        "dblp",
+        "openalex",
+        "crossref",
+        "crossref_doi",
+        "openalex_title",
+        "ae_committee",
+        "s2_title",
+        "manual",
+        "",
     ] = Field(
         default="",
         description="Which enrichment layer last set the affiliation: 'dblp', 'openalex', 'crossref_doi', etc. Empty if never set.",
