@@ -72,6 +72,7 @@ class AuthorIndexEntry(BaseModel):
         "openalex",
         "crossref",
         "crossref_doi",
+        "crossref_title",
         "openalex_title",
         "ae_committee",
         "s2_title",
