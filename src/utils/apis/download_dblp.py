@@ -33,7 +33,8 @@ MIN_SIZE_MB = 500  # anything smaller is likely truncated
 def _remote_last_modified(url: str, *, timeout: int = 10) -> float | None:
     """Return the remote Last-Modified timestamp as epoch seconds, or None."""
     try:
-        resp = requests.head(url, timeout=timeout, allow_redirects=True)
+        headers = {"User-Agent": "ReproDB-Pipeline/1.0 (+https://github.com/ReproDB/reprodb-pipeline)"}
+        resp = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
         lm = resp.headers.get("Last-Modified")
         if lm:
             from email.utils import parsedate_to_datetime
@@ -60,7 +61,8 @@ def _is_up_to_date(path: Path) -> bool | None:
 def _download(dest: Path) -> None:
     """Stream-download DBLP XML to *dest* with progress logging."""
     logger.info("Downloading %s ...", DBLP_URL)
-    resp = requests.get(DBLP_URL, stream=True, timeout=600)
+    headers = {"User-Agent": "ReproDB-Pipeline/1.0 (+https://github.com/ReproDB/reprodb-pipeline)"}
+    resp = requests.get(DBLP_URL, stream=True, timeout=600, headers=headers)
     resp.raise_for_status()
 
     total = int(resp.headers.get("content-length", 0)) or None
@@ -128,7 +130,8 @@ def download_dblp(*, auto: bool = False) -> bool:
 
     # Connectivity check
     try:
-        requests.head(DBLP_URL, timeout=10)
+        headers = {"User-Agent": "ReproDB-Pipeline/1.0 (+https://github.com/ReproDB/reprodb-pipeline)"}
+        requests.head(DBLP_URL, timeout=10, headers=headers)
     except requests.ConnectionError:
         proxy = os.environ.get("https_proxy", "")
         logger.error("Cannot connect to dblp.org (proxy: %s)", proxy)
