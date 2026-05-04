@@ -14,7 +14,9 @@ from pathlib import Path
 import requests
 import yaml
 
-DATA_FILE = Path(__file__).resolve().parent.parent / "reprodb-pipeline-results/output/website_data/_data/all_results_cache.yml"
+DATA_FILE = (
+    Path(__file__).resolve().parent.parent / "reprodb-pipeline-results/output/website_data/_data/all_results_cache.yml"
+)
 
 session = requests.Session()
 session.headers["Accept"] = "application/json"
@@ -233,12 +235,14 @@ def main():
         time.sleep(0.1)
 
     # Summary
-    print(f"\n{'='*80}")
-    print(f"SUMMARY: {total_found}/{len(tasks)} artifacts have discoverable GitHub links ({100*total_found/len(tasks):.1f}%)")
+    print(f"\n{'=' * 80}")
+    print(
+        f"SUMMARY: {total_found}/{len(tasks)} artifacts have discoverable GitHub links ({100 * total_found / len(tasks):.1f}%)"
+    )
     print(f"Errors: {total_errors}")
     print(f"\nBy conference:")
     print(f"{'Conference':<20} {'Total':>6} {'Found':>6} {'Rate':>6}  Sources")
-    print(f"{'-'*20} {'-'*6} {'-'*6} {'-'*6}  {'-'*30}")
+    print(f"{'-' * 20} {'-' * 6} {'-' * 6} {'-' * 6}  {'-' * 30}")
     for cname in sorted(by_conf, key=lambda c: -by_conf[c]["found"]):
         info = by_conf[cname]
         rate = 100 * info["found"] / info["total"] if info["total"] else 0
