@@ -11,12 +11,14 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
+from pathlib import Path
 
 import country_converter as coco
 from pytrie import Trie
 from thefuzz import fuzz
 
 from src.scrapers.repo_utils import download_file
+from src.utils.io.io import load_yaml
 from src.utils.normalization.affiliation import normalize_affiliation as _normalize_affiliation
 from src.utils.normalization.conference import (
     clean_name as _display_name,
@@ -62,138 +64,10 @@ def _build_university_index() -> dict:
             "https://github.com/Hipo/university-domains-list/raw/refs/heads/master/world_universities_and_domains.json"
         )
     )
-    # Manual overrides for institutions not in the database
-    university_info.extend(
-        [
-            {"name": "télécom sudparis", "country": "France"},
-            {"name": "ku leuven", "country": "Belgium"},
-            {"name": "imec-distrinet, ku leuven", "country": "Belgium"},
-            {"name": "university of crete", "country": "Greece"},
-            {"name": "ucla", "country": "United States"},
-            {"name": "tu munich", "country": "Germany"},
-            {"name": "inesc-id & ist u. lisboa in Portugal", "country": "Portugal"},
-            {"name": "ist lisbon & inesc-id", "country": "Portugal"},
-            {"name": "mpi-sws", "country": "Germany"},
-            {"name": "hkust", "country": "Hong Kong"},
-            {"name": "uc irvine", "country": "United States"},
-            {"name": "uiuc", "country": "United States"},
-            {"name": "school of computer science, university college dublin", "country": "Ireland"},
-            {"name": "imdea software institute", "country": "Spain"},
-            {"name": "university of chinese academy of sciences", "country": "China"},
-            {"name": "zhengqing", "country": "China"},
-            {"name": "the university of utah", "country": "United States"},
-            {
-                "name": "institute of parallel and distributed systems, shanghai jiao tong university",
-                "country": "China",
-            },
-            {
-                "name": "computing and imaging institute - the university of utah",
-                "country": "United States",
-            },
-            {"name": "university of crete & ics-forth", "country": "Greece"},
-            {"name": "ics-forth", "country": "Greece"},
-            {"name": "kaust", "country": "Saudi Arabia"},
-            {"name": "lrz", "country": "Germany"},
-            {"name": "ensta bretagne", "country": "France"},
-            {
-                "name": "institute of computing technology chinese academy of sciences",
-                "country": "China",
-            },
-            {"name": "imdea networks institute & uc3m", "country": "Spain"},
-            {"name": "hasso plattner institute", "country": "Germany"},
-            {"name": "unist", "country": "South Korea"},
-            {"name": "niccolò cusano university", "country": "Italy"},
-            {"name": "uc irvine & mpi-sp", "country": "United States"},
-            {"name": "univ. toulouse iii, irit", "country": "France"},
-            {"name": "university of telepegaso,rome,italy", "country": "Italy"},
-            {"name": "leibniz supercomputing center", "country": "Germany"},
-            {"name": "inesc tec & u. minho", "country": "Portugal"},
-            {"name": "barkhausen institut", "country": "Germany"},
-            {"name": "the ohio state university", "country": "United States"},
-            # Additional overrides for common unmatched institutions
-            {"name": "cispa helmholtz center for information security", "country": "Germany"},
-            {"name": "cispa", "country": "Germany"},
-            {"name": "cuhk", "country": "Hong Kong"},
-            {"name": "cuhk-shenzhen", "country": "China"},
-            {"name": "kaist", "country": "South Korea"},
-            {"name": "epfl", "country": "Switzerland"},
-            {"name": "eth zurich", "country": "Switzerland"},
-            {"name": "ethz", "country": "Switzerland"},
-            {"name": "google", "country": "United States"},
-            {"name": "microsoft research", "country": "United States"},
-            {"name": "microsoft", "country": "United States"},
-            {"name": "meta", "country": "United States"},
-            {"name": "amazon", "country": "United States"},
-            {"name": "ibm research", "country": "United States"},
-            {"name": "intel labs", "country": "United States"},
-            {"name": "vmware research", "country": "United States"},
-            {"name": "bytedance", "country": "China"},
-            {"name": "tencent", "country": "China"},
-            {"name": "alibaba", "country": "China"},
-            {"name": "huawei", "country": "China"},
-            {"name": "inesc-id and instituto superior técnico", "country": "Portugal"},
-            {"name": "inesc-id", "country": "Portugal"},
-            {"name": "max planck institute for informatics", "country": "Germany"},
-            {"name": "max planck institute for software systems", "country": "Germany"},
-            {"name": "mpi-sp", "country": "Germany"},
-            {"name": "mpi-inf", "country": "Germany"},
-            {"name": "institute of software", "country": "China"},
-            {"name": "institute of software, chinese academy of sciences", "country": "China"},
-            {"name": "snu", "country": "South Korea"},
-            {"name": "postech", "country": "South Korea"},
-            {"name": "ntu", "country": "Singapore"},
-            {"name": "nus", "country": "Singapore"},
-            {"name": "sutd", "country": "Singapore"},
-            {"name": "tu delft", "country": "Netherlands"},
-            {"name": "tu darmstadt", "country": "Germany"},
-            {"name": "tu berlin", "country": "Germany"},
-            {"name": "tu wien", "country": "Austria"},
-            {"name": "rwth aachen", "country": "Germany"},
-            {"name": "rwth aachen university", "country": "Germany"},
-            {"name": "inria", "country": "France"},
-            {"name": "cea", "country": "France"},
-            {"name": "cnrs", "country": "France"},
-            {"name": "vrije universiteit amsterdam", "country": "Netherlands"},
-            {"name": "vu amsterdam", "country": "Netherlands"},
-            {"name": "sapienza university of rome", "country": "Italy"},
-            {"name": "politecnico di milano", "country": "Italy"},
-            {"name": "iisc", "country": "India"},
-            {"name": "iit bombay", "country": "India"},
-            {"name": "iit delhi", "country": "India"},
-            {"name": "iit kanpur", "country": "India"},
-            {"name": "iit madras", "country": "India"},
-            {"name": "ucl", "country": "United Kingdom"},
-            {"name": "imperial college london", "country": "United Kingdom"},
-            # Industry & government labs
-            {"name": "akamai technologies", "country": "United States"},
-            {"name": "sandia national laboratories", "country": "United States"},
-            {"name": "lawrence berkeley national laboratory", "country": "United States"},
-            {"name": "pnnl", "country": "United States"},
-            {"name": "pacific northwest national laboratory", "country": "United States"},
-            {"name": "hewlett packard enterprise", "country": "United States"},
-            {"name": "hewlett packard enterprise labs", "country": "United States"},
-            {"name": "netflix", "country": "United States"},
-            {"name": "linkedin", "country": "United States"},
-            {"name": "blackberry", "country": "Canada"},
-            {"name": "accenture labs", "country": "United States"},
-            {"name": "mit csail", "country": "United States"},
-            {"name": "baidu security", "country": "China"},
-            {"name": "huawei technologies co.", "country": "China"},
-            {"name": "orange labs", "country": "France"},
-            {"name": "telefonica research", "country": "Spain"},
-            {"name": "csiro's data61", "country": "Australia"},
-            {"name": "csiro data61", "country": "Australia"},
-            # Additional overrides for AE chairs
-            {"name": "max planck society", "country": "Germany"},
-            {"name": "databricks", "country": "United States"},
-            {"name": "university of modena and reggio emilia", "country": "Italy"},
-            {"name": "exostellar", "country": "United States"},
-            {"name": "grenoble inp", "country": "France"},
-            {"name": "qualcomm", "country": "United States"},
-            {"name": "isovalent", "country": "Switzerland"},
-            {"name": "intel", "country": "United States"},
-        ]
-    )
+    # Load manual overrides from external YAML file
+    overrides_path = Path(__file__).resolve().parents[2] / "data" / "institution_overrides.yml"
+    overrides: dict[str, str] = load_yaml(overrides_path)
+    university_info.extend({"name": name, "country": country} for name, country in overrides.items())
 
     name_index: dict = {}
     for uni in university_info:

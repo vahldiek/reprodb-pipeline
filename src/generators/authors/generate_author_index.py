@@ -18,7 +18,6 @@ Usage:
 
 import argparse
 import logging
-from datetime import datetime
 from pathlib import Path
 
 from src.models.authors.author_index import AuthorIndexEntry
@@ -50,7 +49,6 @@ def build_index(authors: list[dict], existing_by_name: dict[str, dict], max_id: 
 
     Returns the updated index list.
     """
-    today = datetime.now().strftime("%Y-%m-%d")
     index = []
     next_id = max_id + 1
     new_count = 0

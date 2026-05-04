@@ -1,0 +1,127 @@
+# Institution overrides for committee classification.
+#
+# Maps institution names (lowercase) to their headquarter country.
+# Used when the Hipo university-domains-list doesn't cover an institution
+# (research labs, companies, abbreviations, combined affiliations).
+#
+# To add a new entry: use the lowercase name as it appears in AE committee
+# data and specify the country where the HQ/primary campus is located.
+
+# --- Universities & research institutes (abbreviations) ---
+télécom sudparis: France
+ku leuven: Belgium
+imec-distrinet, ku leuven: Belgium
+university of crete: Greece
+ucla: United States
+tu munich: Germany
+inesc-id & ist u. lisboa in Portugal: Portugal
+ist lisbon & inesc-id: Portugal
+mpi-sws: Germany
+hkust: Hong Kong
+uc irvine: United States
+uiuc: United States
+school of computer science, university college dublin: Ireland
+imdea software institute: Spain
+university of chinese academy of sciences: China
+zhengqing: China
+the university of utah: United States
+institute of parallel and distributed systems, shanghai jiao tong university: China
+computing and imaging institute - the university of utah: United States
+university of crete & ics-forth: Greece
+ics-forth: Greece
+kaust: Saudi Arabia
+lrz: Germany
+ensta bretagne: France
+institute of computing technology chinese academy of sciences: China
+imdea networks institute & uc3m: Spain
+hasso plattner institute: Germany
+unist: South Korea
+niccolò cusano university: Italy
+uc irvine & mpi-sp: United States
+univ. toulouse iii, irit: France
+university of telepegaso,rome,italy: Italy
+leibniz supercomputing center: Germany
+inesc tec & u. minho: Portugal
+barkhausen institut: Germany
+the ohio state university: United States
+cispa helmholtz center for information security: Germany
+cispa: Germany
+cuhk: Hong Kong
+cuhk-shenzhen: China
+kaist: South Korea
+epfl: Switzerland
+eth zurich: Switzerland
+ethz: Switzerland
+inesc-id and instituto superior técnico: Portugal
+inesc-id: Portugal
+max planck institute for informatics: Germany
+max planck institute for software systems: Germany
+mpi-sp: Germany
+mpi-inf: Germany
+institute of software: China
+institute of software, chinese academy of sciences: China
+snu: South Korea
+postech: South Korea
+ntu: Singapore
+nus: Singapore
+sutd: Singapore
+tu delft: Netherlands
+tu darmstadt: Germany
+tu berlin: Germany
+tu wien: Austria
+rwth aachen: Germany
+rwth aachen university: Germany
+inria: France
+cea: France
+cnrs: France
+vrije universiteit amsterdam: Netherlands
+vu amsterdam: Netherlands
+sapienza university of rome: Italy
+politecnico di milano: Italy
+iisc: India
+iit bombay: India
+iit delhi: India
+iit kanpur: India
+iit madras: India
+ucl: United Kingdom
+imperial college london: United Kingdom
+max planck society: Germany
+university of modena and reggio emilia: Italy
+grenoble inp: France
+
+# --- Industry & government labs ---
+google: United States
+microsoft research: United States
+microsoft: United States
+meta: United States
+amazon: United States
+ibm research: United States
+intel labs: United States
+intel: United States
+vmware research: United States
+bytedance: China
+tencent: China
+alibaba: China
+huawei: China
+huawei technologies co.: China
+akamai technologies: United States
+sandia national laboratories: United States
+lawrence berkeley national laboratory: United States
+pnnl: United States
+pacific northwest national laboratory: United States
+hewlett packard enterprise: United States
+hewlett packard enterprise labs: United States
+netflix: United States
+linkedin: United States
+blackberry: Canada
+accenture labs: United States
+mit csail: United States
+baidu security: China
+orange labs: France
+telefonica research: Spain
+csiro's data61: Australia
+csiro data61: Australia
+databricks: United States
+exostellar: United States
+qualcomm: United States
+isovalent: Switzerland
