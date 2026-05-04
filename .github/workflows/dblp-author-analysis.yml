@@ -57,9 +57,11 @@ jobs:
       - name: Download DBLP if not cached
         run: |
           if [ ! -f data/dblp/dblp.xml.gz ]; then
-            echo "Downloading DBLP database (~3GB)..."
+            echo "Downloading DBLP database (~1GB)..."
             mkdir -p data/dblp
-            wget -q -O data/dblp/dblp.xml.gz https://dblp.org/xml/dblp.xml.gz
+            wget --tries=3 --waitretry=10 --timeout=300 \
+              --user-agent="ReproDB-Pipeline/1.0 (GitHub Actions; +https://github.com/ReproDB/reprodb-pipeline)" \
+              -q -O data/dblp/dblp.xml.gz https://dblp.org/xml/dblp.xml.gz
             echo "Download complete"
           else
             echo "Using cached DBLP database"
