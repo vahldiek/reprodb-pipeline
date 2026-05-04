@@ -66,9 +66,12 @@ class AuthorIndexEntry(BaseModel):
         description="Normalized institution affiliation, e.g. 'Shanghai Jiao Tong University'. Empty string if unknown.",
         examples=["ETH Zurich"],
     )
-    affiliation_source: Literal["csrankings", "dblp", "openalex", "crossref", "manual", ""] = Field(
+    affiliation_source: Literal[
+        "csrankings", "dblp", "openalex", "crossref", "crossref_doi",
+        "openalex_title", "ae_committee", "s2_title", "manual", ""
+    ] = Field(
         default="",
-        description="Which enrichment layer last set the affiliation: 'dblp', 'openalex', or 'manual'. Empty if never set.",
+        description="Which enrichment layer last set the affiliation: 'dblp', 'openalex', 'crossref_doi', etc. Empty if never set.",
         examples=["dblp"],
     )
     affiliation_updated: str = Field(
@@ -85,9 +88,9 @@ class AuthorIndexEntry(BaseModel):
         default_factory=ExternalIds,
         description="Optional identifiers from external databases (DBLP, ORCID, OpenAlex). Empty dict if none known.",
     )
-    category: Literal["systems", "security", "both"] = Field(
+    category: Literal["systems", "security", "both", "unknown"] = Field(
         default="systems",
-        description="Primary research area: 'systems', 'security', or 'both'. Based on conferences published at.",
+        description="Primary research area: 'systems', 'security', 'both', or 'unknown'. Based on conferences published at.",
     )
 
     model_config = {"extra": "forbid"}

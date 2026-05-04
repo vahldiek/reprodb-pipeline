@@ -57,8 +57,8 @@ class RepoStatsEntry(BaseModel):
         description="Repository or archive URL, e.g. 'https://github.com/org/repo'.",
         examples=["https://github.com/org/repo"],
     )
-    source: Literal["github", "zenodo", "figshare"] = Field(
-        description="Platform hosting the artifact: 'GitHub', 'GitLab', 'Zenodo', 'Bitbucket', etc.",
+    source: Literal["github", "zenodo", "figshare", "unknown"] = Field(
+        description="Platform hosting the artifact: 'github', 'zenodo', 'figshare', or 'unknown'.",
         examples=["github"],
     )
     github_stars: int | None = Field(

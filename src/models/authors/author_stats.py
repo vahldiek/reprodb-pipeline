@@ -27,8 +27,8 @@ class ArtifactPaper(BaseModel):
         ),
         examples=[["available", "functional", "reproduced"]],
     )
-    category: Literal["systems", "security"] = Field(
-        description="Research domain: 'systems' or 'security', determined by the conference."
+    category: Literal["systems", "security", "unknown"] = Field(
+        description="Research domain: 'systems' or 'security', determined by the conference. 'unknown' if metadata is missing."
     )
     artifact_citations: int = Field(
         ge=0,
@@ -110,8 +110,8 @@ class AuthorCore(BaseModel):
         description="Total number of 'reproduced' badges across all this author's artifacts.",
         examples=[8],
     )
-    category: Literal["systems", "security", "both"] = Field(
-        description="Research domain based on conferences published at: 'systems', 'security', or 'both'.",
+    category: Literal["systems", "security", "both", "unknown"] = Field(
+        description="Research domain based on conferences published at: 'systems', 'security', 'both', or 'unknown'.",
     )
     author_id: int | None = Field(
         default=None,
@@ -148,7 +148,7 @@ class AuthorStats(AuthorCore):
         description="Percentage of artifacts with a 'functional' badge: (functional / artifact_count) * 100.",
         examples=[83.3],
     )
-    category: Literal["systems", "security", "both", "unknown"] = Field(  # type: ignore[assignment]
+    category: Literal["systems", "security", "both", "unknown"] = Field(
         description="Research domain: 'systems', 'security', 'both', or 'unknown' (if no publications yet).",
     )
     year_range: str = Field(

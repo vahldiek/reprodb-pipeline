@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 CONFERENCE_NAMES = Literal[
     "ACSAC",
     "ATC",
+    "CAIS",
     "CHES",
     "EUROSYS",
     "FAST",
@@ -22,6 +23,7 @@ CONFERENCE_NAMES = Literal[
     "SOSP",
     "SYSTEX",
     "USENIXSEC",
+    "VEHICLESEC",
     "WOOT",
 ]
 
