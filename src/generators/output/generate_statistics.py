@@ -29,7 +29,7 @@ from src.scrapers.parse_results_md import get_ae_results
 from src.scrapers.repo_utils import get_conferences_from_prefix
 from src.scrapers.usenix_scrape import scrape_conference_year, to_pipeline_format
 from src.utils.io.io import save_validated_json, save_yaml
-from src.utils.normalization.conference import CONF_DISPLAY_NAMES, ensure_conference_pages
+from src.utils.normalization.conference import CONF_DISPLAY_NAMES, ensure_conference_pages, ensure_navigation
 from src.utils.normalization.conference import parse_conf_year as extract_conference_name
 
 logger = logging.getLogger(__name__)
@@ -271,6 +271,9 @@ def generate_statistics(conf_regex=".*20[12][0-9]", output_dir=None):
 
     # Auto-create website pages for newly discovered conferences
     ensure_conference_pages(sys_dirs=sys_all_dirs, sec_dirs=sec_all_dirs)
+
+    # Keep navigation menu in sync with discovered conferences
+    ensure_navigation()
 
     # --- Automatic USENIX fallback ---
     # For every sysartifacts / secartifacts directory that has NO results,

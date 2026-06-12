@@ -196,6 +196,74 @@ def ensure_conference_pages(
     return created
 
 
+# ── Auto-update navigation.yml ──────────────────────────────────────────────
+
+
+def ensure_navigation(website_root: str | None = None) -> bool:
+    """Regenerate Security/Systems nav entries in ``_data/navigation.yml``.
+
+    Reads the conference pages from the website content directories and
+    updates the children lists for the Security and Systems nav sections.
+    Other nav entries (Ranking, AE Committees, etc.) are left untouched.
+
+    Returns *True* if the file was modified.
+    """
+    root = website_root or _find_website_root()
+    if not root or not os.path.isdir(root):
+        logger.debug("Website root not found; skipping navigation update")
+        return False
+
+    nav_path = os.path.join(root, "_data", "navigation.yml")
+    if not os.path.isfile(nav_path):
+        logger.debug("navigation.yml not found at %s", nav_path)
+        return False
+
+    with open(nav_path) as fh:
+        nav = yaml.safe_load(fh)
+
+    if not nav or "main" not in nav:
+        return False
+
+    def _build_children(area: str) -> list[dict]:
+        """Build sorted nav children from existing .md pages in an area."""
+        area_dir = os.path.join(root, "content", area)
+        if not os.path.isdir(area_dir):
+            return []
+        children = [{"title": "Overview", "url": f"{area}/"}]
+        confs = []
+        for fname in sorted(os.listdir(area_dir)):
+            if not fname.endswith(".md"):
+                continue
+            slug = fname[:-3]
+            conf_upper = slug.upper()
+            display = CONF_DISPLAY_NAMES.get(conf_upper, conf_upper)
+            confs.append((display, f"{area}/{slug}.html"))
+        # Sort alphabetically by display name
+        for display, url in sorted(confs):
+            children.append({"title": display, "url": url})
+        return children
+
+    modified = False
+    for entry in nav["main"]:
+        if entry.get("title") == "Security":
+            new_children = _build_children("security")
+            if new_children and new_children != entry.get("children"):
+                entry["children"] = new_children
+                modified = True
+        elif entry.get("title") == "Systems":
+            new_children = _build_children("systems")
+            if new_children and new_children != entry.get("children"):
+                entry["children"] = new_children
+                modified = True
+
+    if modified:
+        with open(nav_path, "w") as fh:
+            yaml.dump(nav, fh, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        logger.info("Updated navigation.yml with current conferences")
+
+    return modified
+
+
 # ── Conference display-name mapping ─────────────────────────────────────────
 # Used by auto-generated conference pages.  Conferences not listed here
 # default to the uppercase abbreviation.
