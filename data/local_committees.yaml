@@ -2696,3 +2696,334 @@ woot2026:
 - affiliation: EPFL
   name: Eduard Vlad
   role: member
+sp2026:
+- name: Jelena Mirkovic
+  affiliation: University of Southern California
+  role: chair
+- name: Manuel Egele
+  affiliation: Boston University
+  role: chair
+- name: David Adei
+  affiliation: North Carolina State University
+  role: member
+- name: Mutahar Ali
+  affiliation: University of California Irvine
+  role: member
+- name: Juyang Bai
+  affiliation: John Hopkins University
+  role: member
+- name: Kaustav Bhattacharjee
+  affiliation: Pacific Northwest National Laboratory
+  role: member
+- name: Evangelos Bitsikas
+  affiliation: Northeastern University
+  role: member
+- name: Noah Brown
+  affiliation: UNC Chapel Hill
+  role: member
+- name: Quinn Burke
+  affiliation: University of Wisconsin-Madison
+  role: member
+- name: Arifa Islam Champa
+  affiliation: Idaho State University
+  role: member
+- name: Janak Chandarana
+  affiliation: Amazon
+  role: member
+- name: Xiang Chen
+  affiliation: The Hong Kong University of Science and Technology
+  role: member
+- name: Yanju Chen
+  affiliation: University of California San Diego
+  role: member
+- name: Phaedra Curlin
+  affiliation: University of Colorado Boulder
+  role: member
+- name: Aritra Dasgupta
+  affiliation: University of Florida
+  role: member
+- name: Sohom Datta
+  affiliation: North Carolina State University
+  role: member
+- name: Dipsy Desai
+  affiliation: University of Southern California
+  role: member
+- name: Kyle Domico
+  affiliation: University of Wisconsin-Madison
+  role: member
+- name: Zachary Espiritu
+  affiliation: MongoDB Research
+  role: member
+- name: Marius Fleischer
+  affiliation: NVIDIA
+  role: member
+- name: Saber Ganjisaffar
+  affiliation: University of California Riverside
+  role: member
+- name: Yuanjun Gong
+  affiliation: University of Trento
+  role: member
+- name: Vaishnavi Gudur
+  affiliation: Microsoft
+  role: member
+- name: Wanda Guo
+  affiliation: Texas A&M University
+  role: member
+- name: Mona Hashemi
+  affiliation: National University of Singapore
+  role: member
+- name: Yujin Huang
+  affiliation: The University of Melbourne
+  role: member
+- name: Michele Ianni
+  affiliation: University of Calabria
+  role: member
+- name: Abdullah Al Ishtiaq
+  affiliation: The Pennsylvania State University
+  role: member
+- name: Felix Klement
+  affiliation: University of Passau
+  role: member
+- name: Wei Kong
+  affiliation: Zhejiang Sci-tech University
+  role: member
+- name: Jinseo Lee
+  affiliation: KAIST
+  role: member
+- name: Kunyang Li
+  affiliation: University of Wisconsin-Madison
+  role: member
+- name: Haodong Li
+  affiliation: HUST
+  role: member
+- name: Xin Liu
+  affiliation: Florida State University
+  role: member
+- name: Puzhuo Liu
+  affiliation: Ant Group & Tsinghua University
+  role: member
+- name: Mingyi Liu
+  affiliation: Georgia Institute of Technology
+  role: member
+- name: Tim Hsuan-Ting Lu
+  affiliation: University of Wisconsin-Madison
+  role: member
+- name: Jie Ma
+  affiliation: Beihang University
+  role: member
+- name: Aleksandr Nahapetyan
+  affiliation: North Carolina State University
+  role: member
+- name: Kevin Nam
+  affiliation: Seoul National University
+  role: member
+- name: Tushar Nayan
+  affiliation: Florida International University
+  role: member
+- name: Jean-Charles Noirot Ferrand
+  affiliation: University of Wisconsin-Madison
+  role: member
+- name: Aaryan Patel
+  affiliation: University of Wisconsin-Madison
+  role: member
+- name: Huiyun Peng
+  affiliation: Purdue University
+  role: member
+- name: Mirza Masfiqur Rahman
+  affiliation: Purdue University
+  role: member
+- name: Ali Ranjbar
+  affiliation: Pennsylvania State University
+  role: member
+- name: Andrew Roberts
+  affiliation: KTH Royal Institute of Technology
+  role: member
+- name: Arul Thileeban Sagayam
+  affiliation: Bloomberg
+  role: member
+- name: Ashfaq Ali Shafin
+  affiliation: Florida International University
+  role: member
+- name: Jade Sheffey
+  affiliation: University of Massachusetts Amherst
+  role: member
+- name: Leming Shen
+  affiliation: The Hong Kong Polytechnic University
+  role: member
+- name: Sachin Shukla
+  affiliation: Microsoft
+  role: member
+- name: Salvatore Signorello
+  affiliation: Nova University Lisbon
+  role: member
+- name: Amit Singha
+  affiliation: Purdue University
+  role: member
+- name: Tong Sun
+  affiliation: Zhejiang University
+  role: member
+- name: Daan Vansteenhuyse
+  affiliation: DistriNet, KU Leuven
+  role: member
+- name: Hulin Wang
+  affiliation: Arizona State University
+  role: member
+- name: Anjiang Wei
+  affiliation: Stanford University
+  role: member
+- name: Liwen Xu
+  affiliation: ETH Zürich
+  role: member
+- name: Dianshi Yang
+  affiliation: University of Delaware
+  role: member
+- name: Tao Yang
+  affiliation: KAUST
+  role: member
+- name: Mingming Zha
+  affiliation: Indiana University Bloomington
+  role: member
+- name: Guangsheng Zhang
+  affiliation: University of Technology Sydney
+  role: member
+- name: Olawale Akanji
+  affiliation: Boston University, USA
+  role: member
+- name: Eyhab Al-Masri
+  affiliation: University of Washington, USA
+  role: member
+- name: Weiheng Bai
+  affiliation: University of Minnesota, USA
+  role: member
+- name: Andrew Bao
+  affiliation: University of Minnesota, USA
+  role: member
+- name: Yifeng Cai
+  affiliation: Peking University, China
+  role: member
+- name: Sine Canbolat Kaya
+  affiliation: Karlsruhe Institute of Technology, Germany
+  role: member
+- name: Hongkai Chen
+  affiliation: Arizona State University, USA
+  role: member
+- name: Paul Chung
+  affiliation: University of California, San Diego, USA
+  role: member
+- name: Muhammad Danish
+  affiliation: University of New Mexico, USA
+  role: member
+- name: Saurabh Deochake
+  affiliation: SentinelOne, Inc., USA
+  role: member
+- name: Janhavi Deshpande
+  affiliation: Salesforce Security, USA
+  role: member
+- name: Zheyun Feng
+  affiliation: University of New Hampshire, USA
+  role: member
+- name: Sanket Goutam
+  affiliation: Stony Brook University, USA
+  role: member
+- name: Keyan Guo
+  affiliation: University at Buffalo, USA
+  role: member
+- name: Ankit Gupta
+  affiliation: New York University, USA
+  role: member
+- name: Yifeng He
+  affiliation: University of California, Davis, USA
+  role: member
+- name: Mahdieh Heidaripour
+  affiliation: Augusta University, USA
+  role: member
+- name: Malvika Jadhav
+  affiliation: University of Florida, USA
+  role: member
+- name: Kathiresan Jayabalan
+  affiliation: IEEE, USA
+  role: member
+- name: Fujiao Ji
+  affiliation: University of Tennessee, Knoxville, USA
+  role: member
+- name: Qinhong Jiang
+  affiliation: Hong Kong Polytechnic University, China
+  role: member
+- name: Kunlin Li
+  affiliation: Hong Kong University of Science and Technology, China
+  role: member
+- name: Ying Li
+  affiliation: University of California, Los Angeles, USA
+  role: member
+- name: Zichuan Li
+  affiliation: University of Illinois, Urbana-Champaign, USA
+  role: member
+- name: Qishen Sam Liang
+  affiliation: University of Southern California, USA
+  role: member
+- name: Feng Luo
+  affiliation: Hong Kong Polytechnic University, China
+  role: member
+- name: Zhongkui Ma
+  affiliation: University of Queensland, Australia
+  role: member
+- name: Gnaneswara Marupilla
+  affiliation: Independent researcher
+  role: member
+- name: Khosro Moeini
+  affiliation: Boston University, USA
+  role: member
+- name: Akshata Kishore Moharir
+  affiliation: Microsoft, Inc., USA
+  role: member
+- name: Sidhant Narula
+  affiliation: Old Dominion University, USA
+  role: member
+- name: Bhakti Narvekar
+  affiliation: Walmart, Inc., USA
+  role: member
+- name: Steven Ngo
+  affiliation: University of California, Irvine, USA
+  role: member
+- name: Abanisenioluwa Orojo
+  affiliation: Baylor University, USA
+  role: member
+- name: Rupesh Prasad
+  affiliation: Analog Devices, Inc, USA
+  role: member
+- name: Mohammad Jamshir Qureshi
+  affiliation: Purdue University (USA)
+  role: member
+- name: Rishit Saiya
+  affiliation: PricewaterhouseCoopers, Inc., USA
+  role: member
+- name: Kunsheng Tang
+  affiliation: University of Science and Technology of China, China
+  role: member
+- name: Caner Tol
+  affiliation: Worcester Polytechnic Institute, USA
+  role: member
+- name: Lihua Wang
+  affiliation: University of New South Wales, Australia
+  role: member
+- name: Ruining Yang
+  affiliation: Stony Brook University, USA
+  role: member
+- name: Yuxiang Yang
+  affiliation: Tsinghua University, China
+  role: member
+- name: Junseung You
+  affiliation: Seoul National University, Korea
+  role: member
+- name: Jiongchi Yu
+  affiliation: Singapore Management University, Singapore
+  role: member
+- name: Bowen Zhang
+  affiliation: Hong Kong University of Science and Technology, China
+  role: member
+- name: Lupeng Zhang
+  affiliation: National Technical University, Singapore
+  role: member
+- name: Kunsong Zhao
+  affiliation: Hong Kong Polytechnic University, China
+  role: member

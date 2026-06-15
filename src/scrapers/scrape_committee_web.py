@@ -8,6 +8,7 @@ Supported sources:
 - CHES website (ches.iacr.org)
 - PETS website (petsymposium.org)
 - ACSAC website (acsac.org)
+- IEEE S&P website (sp2026.ieee-security.org)
 """
 
 import logging
@@ -883,6 +884,131 @@ def scrape_acsac_committee(year, session=None, cache_only=False):
     return deduped if deduped else None
 
 
+SP_KNOWN_YEARS = (2026,)
+
+
+def _parse_table_rows(table):
+    """Return normalized cell text for each non-empty row in a table."""
+    rows = []
+    for tr in table.find_all("tr"):
+        cells = [re.sub(r"\s+", " ", cell.get_text(" ", strip=True)).strip() for cell in tr.find_all(["th", "td"])]
+        if any(cells):
+            rows.append(cells)
+    return rows
+
+
+def _scrape_sp_chairs_html(soup):
+    """Parse Artifact Evaluation Chairs from the S&P organizing committee table."""
+    chairs = []
+    table = None
+    for candidate in soup.find_all("table"):
+        for row in _parse_table_rows(candidate):
+            if row and row[0] == "Artifact Evaluation Chairs":
+                table = candidate
+                break
+        if table is not None:
+            break
+
+    if table is None:
+        return chairs
+
+    current_role = None
+    for row in _parse_table_rows(table):
+        if len(row) < 3:
+            continue
+        role_cell, name, affiliation = row[:3]
+        if role_cell:
+            current_role = role_cell
+        if current_role != "Artifact Evaluation Chairs":
+            continue
+        name = re.sub(r"\s+", " ", name).strip()
+        affiliation = re.sub(r"\s+", " ", affiliation).strip()
+        if name and len(name) > 1:
+            chairs.append({"name": name, "affiliation": affiliation, "role": "chair"})
+
+    return chairs
+
+
+def _scrape_sp_members_html(soup):
+    """Parse the S&P Artifact Evaluation Committee tables."""
+    members = []
+    heading = None
+    for h in soup.find_all(["h2", "h3", "h4"]):
+        txt = re.sub(r"\s+", " ", h.get_text(" ", strip=True)).strip()
+        if txt == "Artifact Evaluation Committee":
+            heading = h
+            break
+
+    if heading is None:
+        return members
+
+    for sib in heading.next_siblings:
+        if hasattr(sib, "name") and sib.name in ("h2", "h3"):
+            break
+        if not hasattr(sib, "find_all"):
+            continue
+        tables = [sib] if getattr(sib, "name", None) == "table" else sib.find_all("table")
+        for table in tables:
+            for row in _parse_table_rows(table):
+                if len(row) < 2:
+                    continue
+                name, affiliation = row[:2]
+                if name.lower() in {"name", "member"}:
+                    continue
+                name = re.sub(r"\s+", " ", name).strip()
+                affiliation = re.sub(r"\s+", " ", affiliation).strip()
+                if name and len(name) > 1:
+                    members.append({"name": name, "affiliation": affiliation, "role": "member"})
+
+    return members
+
+
+def scrape_sp_committee(year, session=None, cache_only=False):
+    """Scrape AE committee data from the IEEE S&P 2026 website.
+
+    The AEC members are listed on ``cfartifacts.html`` in separate cycle tables.
+    Artifact Evaluation Chairs are listed on ``index.html`` in the organizing
+    committee table.
+    """
+    if year not in SP_KNOWN_YEARS:
+        return None
+
+    base_url = f"https://sp{year}.ieee-security.org"
+    members_html = _cached_fetch(f"{base_url}/cfartifacts.html", session=session, cache_only=cache_only)
+    chairs_html = _cached_fetch(f"{base_url}/index.html", session=session, cache_only=cache_only)
+
+    members = []
+    chairs = []
+
+    if members_html is not None:
+        soup = BeautifulSoup(members_html, "html.parser")
+        members = _scrape_sp_members_html(soup)
+
+    if chairs_html is not None:
+        soup = BeautifulSoup(chairs_html, "html.parser")
+        chairs = _scrape_sp_chairs_html(soup)
+
+    if not members and not chairs:
+        return None
+
+    all_members = chairs + members
+    seen = set()
+    deduped = []
+    for member in all_members:
+        key = member["name"].lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(member)
+
+    if deduped:
+        chair_count = sum(1 for member in deduped if member["role"] == "chair")
+        member_count = len(deduped) - chair_count
+        logger.info("  IEEE S&P: Found %d members + %d chair(s) for sp%d", member_count, chair_count, year)
+
+    return deduped if deduped else None
+
+
 # ── HotCRP scraper ───────────────────────────────────────────────────────────
 
 # Maps (conference, year) to HotCRP PC-list URLs.
@@ -1037,6 +1163,8 @@ def get_alternative_committees(conferences_needed):
             committee = scrape_pets_committee(year, session=sess, cache_only=cache_only)
         elif conf == "acsac":
             committee = scrape_acsac_committee(year, session=sess, cache_only=cache_only)
+        elif conf == "sp":
+            committee = scrape_sp_committee(year, session=sess, cache_only=cache_only)
 
         # Try HotCRP (public pages, not blocked by SKIP_USENIX_SCRAPE)
         if not committee and (conf, year) in HOTCRP_URLS:
@@ -1096,6 +1224,7 @@ if __name__ == "__main__":
     parser.add_argument("--all-ches", action="store_true", help="Scrape all CHES years 2021-2025")
     parser.add_argument("--all-pets", action="store_true", help="Scrape all PETS years 2020-2025")
     parser.add_argument("--all-acsac", action="store_true", help="Scrape all ACSAC years 2020-2025")
+    parser.add_argument("--all-sp", action="store_true", help="Scrape IEEE S&P 2026 committee data")
     args = parser.parse_args()
 
     if args.all_usenix:
@@ -1126,6 +1255,14 @@ if __name__ == "__main__":
                 logger.info(f"acsac{y}: {len(committee)} members")
             else:
                 logger.info(f"acsac{y}: not found")
+    elif args.all_sp:
+        sess = _get_session()
+        for y in SP_KNOWN_YEARS:
+            committee = scrape_sp_committee(y, session=sess)
+            if committee:
+                logger.info(f"sp{y}: {len(committee)} members")
+            else:
+                logger.info(f"sp{y}: not found")
     elif args.conference and args.year:
         conf = args.conference.lower()
         if conf in USENIX_CONF_SLUGS:
@@ -1136,6 +1273,8 @@ if __name__ == "__main__":
             result = scrape_pets_committee(args.year)
         elif conf == "acsac":
             result = scrape_acsac_committee(args.year)
+        elif conf == "sp":
+            result = scrape_sp_committee(args.year)
         else:
             logger.info(f"Unknown conference: {conf}")
             sys.exit(1)
