@@ -65,7 +65,7 @@ STAGES: tuple[Stage, ...] = (
         # The cache lets re-runs without input changes finish in <1s.
         # Per-URL disk caches expire after 30 days (CACHE_TTL_STATS), so
         # the stage-level TTL matches to ensure fresh API data.
-        inputs=("_data/all_results_cache.yml", "_build/artifinder_matched_urls.json"),
+        inputs=("_data/all_results_cache.yml", "assets/data/artifacts.json"),
         ttl=30 * 86400,  # 30 days — re-run when per-URL caches expire
         outputs=(
             "_data/repo_stats.yml",
@@ -112,11 +112,9 @@ STAGES: tuple[Stage, ...] = (
         depends_on=("statistics", "author_stats"),
         optional=True,
         outputs=(
-            "assets/data/artifinder.json",
             "_data/artifinder_summary.yml",
             "_data/artifinder_by_year.yml",
             "_data/artifinder_by_conference.yml",
-            "_build/artifinder_matched_urls.json",
         ),
     ),
     Stage(

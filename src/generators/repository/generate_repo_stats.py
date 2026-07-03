@@ -602,34 +602,37 @@ def _enrich_top_repos(aggregated: dict, all_results: dict, output_dir: Path | No
     logger.info(f"Enriched {enriched} top-repo entries with badges/authors")
 
 
-def _inject_artifinder_matched_urls(all_results: dict, output_dir: str | None) -> None:
-    """Add ArtiFinder-matched GitHub links to *all_results* for repo-stat collection.
+def _inject_artifinder_urls(all_results: dict, output_dir: str | None) -> None:
+    """Add ArtiFinder-discovered GitHub links to *all_results* for repo-stats.
 
-    Reads ``_build/artifinder_matched_urls.json`` (written by the artifinder
-    stage). Each record ``{conference, year, title, url}`` is appended as a
-    lightweight artifact entry under the ``<conf><year>`` key so the existing
-    stats-collection and de-duplication logic picks it up. No-op when the file
-    is absent (e.g. the optional artifinder stage did not run).
+    Reads ``assets/data/artifacts.json`` (back-patched by the artifinder stage
+    with an ``artifinder_urls`` list). For each AE artifact, its GitHub
+    ArtiFinder links are appended as lightweight entries under the
+    ``<conf><year>`` key so the existing stats-collection and de-duplication
+    logic picks them up. Project policy: ArtiFinder links are excluded from all
+    scores, but a GitHub repo discovered for a paper that *did* go through AE
+    may be counted in repository statistics. No-op when the file is absent.
     """
     if not output_dir:
         return
-    path = Path(output_dir) / "_build" / "artifinder_matched_urls.json"
+    path = Path(output_dir) / "assets" / "data" / "artifacts.json"
     if not path.exists():
         return
-    records = load_json(path, default=[]) or []
+    artifacts = load_json(path, default=[]) or []
     added = 0
-    for rec in records:
-        url = rec.get("url", "")
-        conf = str(rec.get("conference", "")).lower()
-        year = rec.get("year")
-        if not url or not conf or year is None:
+    for art in artifacts:
+        conf = str(art.get("conference", "")).lower()
+        year = art.get("year")
+        if not conf or year is None:
             continue
-        key = f"{conf}{year}"
-        bucket = all_results.setdefault(key, [])
-        bucket.append({"title": rec.get("title", "Unknown"), "artifact_urls": [url]})
-        added += 1
+        for url in art.get("artifinder_urls", []):
+            if "github.com/" not in url:
+                continue
+            key = f"{conf}{year}"
+            all_results.setdefault(key, []).append({"title": art.get("title", "Unknown"), "artifact_urls": [url]})
+            added += 1
     if added:
-        logger.info(f"Injected {added} ArtiFinder-matched GitHub links for repository statistics")
+        logger.info(f"Injected {added} ArtiFinder-discovered GitHub links for repository statistics")
 
 
 def main():
@@ -670,7 +673,7 @@ def main():
     # counted in repository statistics (project policy: ArtiFinder links are
     # excluded from every score, but a GitHub repo it discovers for a paper
     # that *did* go through AE may be used for repo stats).
-    _inject_artifinder_matched_urls(all_results, args.output_dir)
+    _inject_artifinder_urls(all_results, args.output_dir)
 
     # Load existing repo stats from the website (historical data).
     # Only fetch stats for NEW artifacts not already in the historical data,

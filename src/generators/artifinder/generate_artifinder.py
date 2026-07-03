@@ -2,19 +2,18 @@
 """Generate ArtiFinder integration outputs.
 
 Downloads the ArtiFinder-Data set, matches each discovered artifact link to an
-existing artifact-evaluation (AE) paper by **title + author list**, and writes:
+existing artifact-evaluation (AE) paper by **title + author list**, and:
 
-  - ``assets/data/artifinder.json``          — every discovered link + match info
-  - ``_data/artifinder_summary.yml``          — headline totals (Jekyll)
-  - ``_data/artifinder_by_year.yml``          — per-year discovery trend (Jekyll)
-  - ``_data/artifinder_by_conference.yml``    — per-conference breakdown (Jekyll)
-  - ``_build/artifinder_matched_urls.json``   — GitHub links matched to AE papers
-                                                (consumed by the repo_stats stage)
+  - **back-patches** ``assets/data/artifacts.json`` to add an ``artifinder_urls``
+    list to every AE artifact that ArtiFinder found a link for.  These links
+    carry no badges and never affect any score; the only place they may be
+    reused is repository statistics (GitHub stars/forks), per project policy.
+  - writes small Jekyll aggregates for the ArtiFinder discovery page:
+    ``_data/artifinder_summary.yml``, ``_data/artifinder_by_year.yml``,
+    ``_data/artifinder_by_conference.yml``.
 
-It also **back-patches** ``assets/data/artifacts.json`` to add an
-``artifinder_urls`` list to every AE artifact that ArtiFinder found a link for.
-These links carry no badges and never affect any score; the only place they may
-be reused is repository statistics (GitHub stars/forks), per project policy.
+The raw discovered links live in the upstream ArtiFinder-Data repository; we do
+not republish them here.
 
 Usage::
 
@@ -30,10 +29,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from src.models.artifacts.artifacts import Artifact
-from src.models.artifacts.artifinder import ArtiFinderEntry
 from src.scrapers.artifinder import DEFAULT_MIN_YEAR, load_artifinder
 from src.scrapers.repo_utils import _normalise_github_repo_url
-from src.utils.io.io import load_json, resolve_data_path, save_json, save_validated_json, save_yaml
+from src.utils.io.io import load_json, resolve_data_path, save_validated_json, save_yaml
 from src.utils.normalization.conference import normalize_name, normalize_title
 
 logger = logging.getLogger(__name__)
@@ -59,11 +57,11 @@ def match_entries(
     entries: list[dict],
     artifacts: list[dict],
     authors_by_title: dict[str, set[str]],
-) -> tuple[list[dict], list[dict]]:
+) -> list[dict]:
     """Match ArtiFinder entries to AE artifacts by title + author overlap.
 
     Mutates matched ``artifacts`` in place to append ``artifinder_urls`` and
-    returns ``(artifinder_records, matched_github_urls)``.
+    returns the per-entry match records (used only to build the aggregates).
 
     A match requires the same conference, the same year, an identical
     normalised title, and — when author lists are known on both sides — at
@@ -77,7 +75,6 @@ def match_entries(
         artifact_index.setdefault(key, art)
 
     records: list[dict] = []
-    matched_github: list[dict] = []
 
     for entry in entries:
         conf = str(entry["conference"]).upper()
@@ -96,19 +93,14 @@ def match_entries(
             else:
                 matched = True
 
-        record = {
-            "conference": entry["conference"],
-            "category": entry["category"],
-            "year": year,
-            "title": entry["title"],
-            "authors": entry.get("authors", []),
-            "page_link": entry.get("page_link"),
-            "artifact_url": url,
-            "source": "artifinder",
-            "matched_ae": matched,
-            "paper_id": (art.get("paper_id") if matched else None),
-        }
-        records.append(record)
+        records.append(
+            {
+                "conference": entry["conference"],
+                "year": year,
+                "artifact_url": url,
+                "matched_ae": matched,
+            }
+        )
 
         if matched and art is not None:
             existing = set(art.get("artifact_urls", [])) | set(art.get("artifinder_urls", []))
@@ -116,13 +108,8 @@ def match_entries(
             norm_existing = {u.rstrip("/") for u in existing}
             if url.rstrip("/") not in norm_existing:
                 art.setdefault("artifinder_urls", []).append(url)
-            # GitHub links matched to an AE paper may feed repository stats.
-            if _normalise_github_repo_url(url):
-                matched_github.append(
-                    {"conference": entry["conference"], "year": year, "title": entry["title"], "url": url}
-                )
 
-    return records, matched_github
+    return records
 
 
 def _build_stats(counts: list[dict], records: list[dict]) -> tuple[dict, list[dict], list[dict]]:
@@ -202,7 +189,6 @@ def generate_artifinder(
     root = Path(data_dir)
     assets_data = root / "assets" / "data"
     jekyll_data = root / "_data"
-    build_dir = root / "_build"
 
     data = load_artifinder(conf_regex=conf_regex, min_year=min_year, local_dir=local_dir)
     if not data.entries:
@@ -214,28 +200,25 @@ def generate_artifinder(
     paper_authors = load_json(pa_path, default=[]) or [] if pa_path.exists() else []
     authors_by_title = _build_paper_authors_index(paper_authors)
 
-    records, matched_github = match_entries(data.entries, artifacts, authors_by_title)
+    records = match_entries(data.entries, artifacts, authors_by_title)
 
-    # Back-patch artifacts.json (only artifinder_urls were possibly added).
+    # Back-patch artifacts.json (only artifinder_urls were possibly added). This
+    # is the single place ArtiFinder links are persisted; the raw links stay in
+    # the upstream ArtiFinder-Data repo. The repo_stats stage reads the GitHub
+    # links directly from here.
     save_validated_json(assets_data / "artifacts.json", artifacts, Artifact)
 
-    # ArtiFinder collection.
-    save_validated_json(assets_data / "artifinder.json", records, ArtiFinderEntry, indent=None)
-
-    # Repo-stats hand-off (GitHub links matched to AE papers).
-    save_json(build_dir / "artifinder_matched_urls.json", matched_github)
-
-    # Website statistics (Jekyll _data).
+    # Website statistics (Jekyll _data) for the ArtiFinder discovery page.
     summary, by_year, by_conf = _build_stats(data.counts, records)
     save_yaml(jekyll_data / "artifinder_summary.yml", summary)
     save_yaml(jekyll_data / "artifinder_by_year.yml", by_year)
     save_yaml(jekyll_data / "artifinder_by_conference.yml", by_conf)
 
     logger.info(
-        "ArtiFinder: %d discovered links (%d matched to AE, %d GitHub matched), min_year=%s",
+        "ArtiFinder: %d discovered links (%d matched to AE, %d GitHub), min_year=%s",
         summary["total_discovered"],
         summary["total_matched_ae"],
-        len(matched_github),
+        summary["github_count"],
         min_year,
     )
     return summary

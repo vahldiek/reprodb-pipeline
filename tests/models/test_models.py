@@ -16,7 +16,6 @@ from src.models.aggregates.repo_stats import (
 )
 from src.models.aggregates.summary import Summary
 from src.models.artifacts.artifacts import Artifact
-from src.models.artifacts.artifinder import ArtiFinderEntry
 from src.models.artifacts.paper_index import Paper
 from src.models.artifacts.search_data import SearchEntry
 from src.models.authors.author_index import AffiliationHistoryEntry, AuthorIndexEntry, ExternalIds
@@ -404,50 +403,6 @@ class TestArtifactArtifinderUrls:
     def test_accepts_list(self):
         art = self._make(artifinder_urls=["https://github.com/found/repo"])
         assert art.artifinder_urls == ["https://github.com/found/repo"]
-
-
-class TestArtiFinderEntry:
-    def _make(self, **overrides):
-        defaults = dict(
-            conference="USENIXSEC",
-            category="security",
-            year=2023,
-            title="Discovered Paper",
-            authors=["Jane Doe"],
-            page_link="https://example.com/p",
-            artifact_url="https://github.com/x/y",
-        )
-        defaults.update(overrides)
-        return ArtiFinderEntry(**defaults)
-
-    def test_valid_defaults(self):
-        e = self._make()
-        assert e.source == "artifinder"
-        assert e.matched_ae is False
-        assert e.paper_id is None
-
-    def test_matched_with_paper_id(self):
-        e = self._make(matched_ae=True, paper_id=42)
-        assert e.matched_ae is True
-        assert e.paper_id == 42
-
-    def test_year_lower_bound(self):
-        # ArtiFinder retains pre-AE editions; the model allows them back to 1990.
-        assert self._make(year=1999).year == 1999
-        with pytest.raises(ValidationError):
-            self._make(year=1989)
-
-    def test_invalid_category_rejected(self):
-        with pytest.raises(ValidationError):
-            self._make(category="other")
-
-    def test_extra_field_rejected(self):
-        with pytest.raises(ValidationError):
-            self._make(badges=["available"])
-
-    def test_round_trip(self):
-        e = self._make(matched_ae=True, paper_id=7)
-        assert ArtiFinderEntry(**e.model_dump()) == e
 
 
 # ── Paper (paper_index) ───────────────────────────────────────────

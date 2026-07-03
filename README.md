@@ -92,8 +92,10 @@ Configuration:
 | `artifinder_min_year` | `PIPELINE_ARTIFINDER_MIN_YEAR` | `2017` | Earliest conference edition year to ingest (AE era). |
 | `artifinder_local_dir` | `PIPELINE_ARTIFINDER_LOCAL_DIR` | *(unset)* | Path to a local ArtiFinder-Data checkout; skips network access. Also honours `REPRODB_ARTIFINDER_DIR`. |
 
-Outputs: `assets/data/artifinder.json`, `_data/artifinder_{summary,by_year,by_conference}.yml`,
-and `_build/artifinder_matched_urls.json` (GitHub links handed to the repo-stats stage).
+Outputs: back-patched `artifinder_urls` on matched artifacts in `assets/data/artifacts.json`
+and Jekyll aggregates `_data/artifinder_{summary,by_year,by_conference}.yml` for the discovery
+page. The `repo_stats` stage reads the matched GitHub links directly from `artifacts.json`. The
+raw discovered links stay in the upstream ArtiFinder-Data repository and are not republished here.
 
 ---
 

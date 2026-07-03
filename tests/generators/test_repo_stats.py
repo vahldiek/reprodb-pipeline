@@ -6,7 +6,7 @@ dicts and rolls them up into the final structure.
 """
 
 from src.generators.repository.generate_repo_stats import (
-    _inject_artifinder_matched_urls,
+    _inject_artifinder_urls,
     _is_excluded_repo,
     aggregate_stats,
 )
@@ -198,35 +198,50 @@ class TestExcludedRepos:
         assert not _is_excluded_repo("https://zenodo.org/record/12345")
 
 
-class TestInjectArtifinderMatchedUrls:
-    """The artifinder stage hands GitHub links to repo_stats via a JSON file."""
+class TestInjectArtifinderUrls:
+    """repo_stats reads ArtiFinder GitHub links from artifacts.json."""
 
-    def test_injects_records_under_conf_year_key(self, tmp_path):
-        (tmp_path / "_build").mkdir()
-        (tmp_path / "_build" / "artifinder_matched_urls.json").write_text(
-            '[{"conference": "USENIXSEC", "year": 2023, "title": "P", "url": "https://github.com/a/b"}]'
+    def _write_artifacts(self, tmp_path, artifacts):
+        d = tmp_path / "assets" / "data"
+        d.mkdir(parents=True)
+        import json
+
+        (d / "artifacts.json").write_text(json.dumps(artifacts))
+
+    def test_injects_github_links_under_conf_year_key(self, tmp_path):
+        self._write_artifacts(
+            tmp_path,
+            [{"conference": "USENIXSEC", "year": 2023, "title": "P", "artifinder_urls": ["https://github.com/a/b"]}],
         )
         all_results = {"usenixsec2023": [{"title": "Existing", "badges": []}]}
-        _inject_artifinder_matched_urls(all_results, str(tmp_path))
+        _inject_artifinder_urls(all_results, str(tmp_path))
         assert len(all_results["usenixsec2023"]) == 2
-        injected = all_results["usenixsec2023"][-1]
-        assert injected["artifact_urls"] == ["https://github.com/a/b"]
+        assert all_results["usenixsec2023"][-1]["artifact_urls"] == ["https://github.com/a/b"]
 
     def test_creates_new_bucket_when_missing(self, tmp_path):
-        (tmp_path / "_build").mkdir()
-        (tmp_path / "_build" / "artifinder_matched_urls.json").write_text(
-            '[{"conference": "NDSS", "year": 2024, "title": "P", "url": "https://github.com/x/y"}]'
+        self._write_artifacts(
+            tmp_path,
+            [{"conference": "NDSS", "year": 2024, "title": "P", "artifinder_urls": ["https://github.com/x/y"]}],
         )
         all_results = {}
-        _inject_artifinder_matched_urls(all_results, str(tmp_path))
+        _inject_artifinder_urls(all_results, str(tmp_path))
         assert all_results["ndss2024"][0]["artifact_urls"] == ["https://github.com/x/y"]
+
+    def test_non_github_links_ignored(self, tmp_path):
+        self._write_artifacts(
+            tmp_path,
+            [{"conference": "NDSS", "year": 2024, "title": "P", "artifinder_urls": ["https://zenodo.org/record/1"]}],
+        )
+        all_results = {}
+        _inject_artifinder_urls(all_results, str(tmp_path))
+        assert all_results == {}
 
     def test_missing_file_is_noop(self, tmp_path):
         all_results = {"a2023": [{"title": "x"}]}
-        _inject_artifinder_matched_urls(all_results, str(tmp_path))
+        _inject_artifinder_urls(all_results, str(tmp_path))
         assert all_results == {"a2023": [{"title": "x"}]}
 
     def test_none_output_dir_is_noop(self):
         all_results = {}
-        _inject_artifinder_matched_urls(all_results, None)
+        _inject_artifinder_urls(all_results, None)
         assert all_results == {}
