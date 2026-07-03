@@ -77,6 +77,24 @@ class TestMatchEntries:
         assert artifacts[0]["badges"] == ["available", "functional"]
 
 
+class TestAuthorIndex:
+    def test_author_key_normalises_accents_and_case(self):
+        assert g._author_key("Manuel Vögele") == "manuel vogele"
+        assert g._author_key("Anjo Vahldiek-Oberwagner") == "anjo vahldiek oberwagner"
+
+    def test_build_author_index_only_unmatched(self):
+        entries = [
+            _entry("NDSS", 2023, "Matched.", ["Jane Doe"], "https://github.com/a/b"),
+            _entry("CCS", 2023, "Unmatched.", ["John Roe", "Jane Doe"], "https://github.com/c/d"),
+        ]
+        records = [{"matched_ae": True}, {"matched_ae": False}]
+        idx = g._build_author_index(entries, records)
+        # Only the unmatched paper's authors are indexed.
+        assert set(idx.keys()) == {"john roe", "jane doe"}
+        assert idx["jane doe"][0]["title"] == "Unmatched."
+        assert idx["john roe"][0]["url"] == "https://github.com/c/d"
+
+
 class TestGenerateArtifinderEndToEnd:
     @pytest.fixture
     def _patch_loader(self, monkeypatch):
@@ -140,6 +158,12 @@ class TestGenerateArtifinderEndToEnd:
         assert se[0]["artifact_urls"] == []
         assert se[0]["artifinder_urls"] == ["https://github.com/foo/bar"]
         assert se[0]["authors"] == ["Someone Else"]
+
+        # Author-indexed non-AE discoveries for profile pages.
+        aa = json.loads((tmp_website / "assets" / "data" / "artifinder_authors.json").read_text())
+        assert "someone else" in aa
+        assert aa["someone else"][0]["title"] == "Untracked Venue Paper."
+        assert aa["someone else"][0]["url"] == "https://github.com/foo/bar"
 
     def test_missing_artifacts_file_is_safe(self, tmp_website, _patch_loader):
         summary = g.generate_artifinder(str(tmp_website), min_year=2017)

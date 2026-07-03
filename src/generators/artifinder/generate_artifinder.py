@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
+import unicodedata
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -215,6 +217,43 @@ def _build_search_entries(entries: list[dict], records: list[dict]) -> list[dict
     return out
 
 
+def _author_key(name: str) -> str:
+    """Normalised author key shared with the profile-page JS (``afKey``).
+
+    Lower-cases, strips accents (NFKD + drop combining marks), and reduces to
+    single-spaced alphanumerics. Kept intentionally simple so the browser can
+    reproduce it exactly.
+    """
+    n = unicodedata.normalize("NFKD", name or "")
+    n = "".join(c for c in n if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", n.lower()).strip()
+
+
+def _build_author_index(entries: list[dict], records: list[dict]) -> dict[str, list[dict]]:
+    """Map normalised author key -> list of non-AE discovered papers.
+
+    Only unmatched (non-AE) discoveries are included; matched papers already
+    appear on profiles via their AE artifact (with the ArtiFinder marker).
+    Records are aligned 1:1 with *entries*.
+    """
+    index: dict[str, list[dict]] = defaultdict(list)
+    for entry, rec in zip(entries, records, strict=True):
+        if rec["matched_ae"]:
+            continue
+        paper = {
+            "title": entry["title"].strip(),
+            "conference": entry["conference"],
+            "year": int(entry["year"]),
+            "url": entry["discovered_artifact"],
+            "authors": entry.get("authors", []),
+        }
+        for author in entry.get("authors", []):
+            key = _author_key(author)
+            if key:
+                index[key].append(paper)
+    return dict(index)
+
+
 def generate_artifinder(
     data_dir: str,
     min_year: int | None = DEFAULT_MIN_YEAR,
@@ -249,6 +288,11 @@ def generate_artifinder(
     # they are findable in the site search (marked, no badges, no scores).
     search_entries = _build_search_entries(data.entries, records)
     save_json(build_dir / "artifinder_search_entries.json", search_entries)
+
+    # Author-indexed non-AE discoveries so they can be listed (marked) on
+    # author and institution profile pages without affecting any score.
+    author_index = _build_author_index(data.entries, records)
+    save_json(assets_data / "artifinder_authors.json", author_index)
 
     # Website statistics (Jekyll _data) for the ArtiFinder discovery page.
     summary, by_year, by_conf = _build_stats(data.counts, records)
