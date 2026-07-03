@@ -88,7 +88,7 @@ class TestGenerateArtifinderEndToEnd:
                 ["Domien Schepers", "Mathy Vanhoef"],
                 "https://github.com/domienschepers/wifi-framing",
             ),
-            # CCS is not tracked for AE -> stays unmatched.
+            # CCS is not tracked for AE → stays unmatched.
             _entry("CCS", 2023, "Untracked Venue Paper.", ["Someone Else"], "https://github.com/foo/bar"),
         ]
         counts = [

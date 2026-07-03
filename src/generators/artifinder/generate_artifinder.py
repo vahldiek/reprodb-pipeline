@@ -69,10 +69,14 @@ def match_entries(
     """
     # Index artifacts by (conference, year, normalized_title) → artifact dict.
     artifact_index: dict[tuple[str, int, str], dict] = {}
-    for art in artifacts:
-        key = (str(art.get("conference", "")).upper(), int(art.get("year", 0)), normalize_title(art.get("title", "")))
+    for art_row in artifacts:
+        key = (
+            str(art_row.get("conference", "")).upper(),
+            int(art_row.get("year", 0)),
+            normalize_title(art_row.get("title", "")),
+        )
         # Keep the first artifact for a given key (there should only be one).
-        artifact_index.setdefault(key, art)
+        artifact_index.setdefault(key, art_row)
 
     records: list[dict] = []
 
