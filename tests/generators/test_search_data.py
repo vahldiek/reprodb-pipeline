@@ -226,6 +226,7 @@ class TestGenerateSearchData:
                         "doi_url": "",
                         "authors": ["Jane Doe"],
                         "affiliations": [],
+                        "source": "artifinder",
                     }
                 ]
             )
@@ -236,3 +237,6 @@ class TestGenerateSearchData:
         disc = next(e for e in result if e["title"] == "Discovered Only")
         assert disc["artifinder_urls"] == ["https://github.com/x/y"]
         assert disc["badges"] == []
+        assert disc["source"] == "artifinder"
+        ae = next(e for e in result if e["title"] == "AE Paper")
+        assert ae["source"] == "ae"

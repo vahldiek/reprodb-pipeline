@@ -67,6 +67,7 @@ def generate_search_data(data_dir: str) -> list:
             "doi_url": doi_url,
             "authors": clean_authors,
             "affiliations": affiliations,
+            "source": "ae",
         }
         # ArtiFinder-discovered links (not verified, no badges) travel alongside
         # the AE artifact_urls so the UI can render an "Artifinder" marker.

@@ -72,5 +72,14 @@ class SearchEntry(BaseModel):
         description="Award designation such as 'Distinguished Artifact'. Null if no award.",
         examples=["Distinguished Artifact"],
     )
+    source: Literal["ae", "artifinder"] = Field(
+        default="ae",
+        description=(
+            "Provenance of the entry: 'ae' for papers that went through artifact evaluation "
+            "(they may still carry additional artifinder_urls), or 'artifinder' for papers that "
+            "were only discovered by ArtiFinder and never went through AE (no badges, no scores)."
+        ),
+        examples=["ae"],
+    )
 
     model_config = {"extra": "forbid"}

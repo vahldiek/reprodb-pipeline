@@ -165,6 +165,7 @@ class TestGenerateArtifinderEndToEnd:
         assert se[0]["artifact_urls"] == []
         assert se[0]["artifinder_urls"] == ["https://github.com/foo/bar"]
         assert se[0]["authors"] == ["Someone Else"]
+        assert se[0]["source"] == "artifinder"
 
         # Author-indexed non-AE discoveries for profile pages.
         aa = json.loads((tmp_website / "assets" / "data" / "artifinder_authors.json").read_text())

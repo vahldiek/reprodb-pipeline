@@ -215,6 +215,7 @@ def _build_search_entries(entries: list[dict], records: list[dict]) -> list[dict
             "doi_url": page if is_doi else "",
             "authors": entry.get("authors", []),
             "affiliations": [],
+            "source": "artifinder",
         }
         if page and not is_doi:
             se["paper_url"] = page
