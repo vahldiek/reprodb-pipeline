@@ -118,7 +118,9 @@ def match_entries(
     return records
 
 
-def _build_stats(counts: list[dict], records: list[dict]) -> tuple[dict, list[dict], list[dict]]:
+def _build_stats(
+    counts: list[dict], records: list[dict], source_updated: str | None = None
+) -> tuple[dict, list[dict], list[dict]]:
     """Build summary, per-year, and per-conference aggregates for the website."""
     matched_by_cy: dict[tuple[str, int], int] = defaultdict(int)
     github_by_cy: dict[tuple[str, int], int] = defaultdict(int)
@@ -180,7 +182,10 @@ def _build_stats(counts: list[dict], records: list[dict]) -> tuple[dict, list[di
         "discovery_pct": round(100 * total_discovered / total_papers, 1) if total_papers else 0.0,
         "conferences": sorted(by_conf_acc.keys()),
         "year_range": f"{min(years)}\u2013{max(years)}" if years else "",
-        "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        # Date the ArtiFinder-Data source was last updated (its latest commit),
+        # falling back to today when that can't be determined.
+        "data_updated": source_updated or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
     return summary, by_year, by_conf
 
@@ -295,7 +300,7 @@ def generate_artifinder(
     save_json(assets_data / "artifinder_authors.json", author_index)
 
     # Website statistics (Jekyll _data) for the ArtiFinder discovery page.
-    summary, by_year, by_conf = _build_stats(data.counts, records)
+    summary, by_year, by_conf = _build_stats(data.counts, records, data.source_updated)
     save_yaml(jekyll_data / "artifinder_summary.yml", summary)
     save_yaml(jekyll_data / "artifinder_by_year.yml", by_year)
     save_yaml(jekyll_data / "artifinder_by_conference.yml", by_conf)

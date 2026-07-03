@@ -111,6 +111,12 @@ STAGES: tuple[Stage, ...] = (
         description="Integrate ArtiFinder-discovered artifact links (no badges, excluded from scores)",
         depends_on=("statistics", "author_stats"),
         optional=True,
+        # Participate in the content-hash skip cache: re-run when the AE
+        # artifacts or the author map change. The remote ArtiFinder-Data set is
+        # fetched through the shared HTTP cache, and the day-long TTL bounds how
+        # often we re-pull it even when local inputs are unchanged.
+        inputs=("assets/data/artifacts.json", "_build/paper_authors_map.json"),
+        ttl=86400,  # 1 day — refresh discovered links daily at most
         outputs=(
             "_data/artifinder_summary.yml",
             "_data/artifinder_by_year.yml",

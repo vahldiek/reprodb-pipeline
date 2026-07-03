@@ -28,6 +28,8 @@ import json
 import logging
 import os
 import re
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
@@ -76,10 +78,13 @@ class ArtiFinderData(NamedTuple):
         counts: One dict per conference-year with keys ``conference``,
             ``category``, ``year``, ``total_papers`` (scanned) and
             ``discovered`` (papers with a non-null artifact link).
+        source_updated: ``YYYY-MM-DD`` date the ArtiFinder-Data source was last
+            updated (its latest commit), or ``None`` if it could not be found.
     """
 
     entries: list[dict]
     counts: list[dict]
+    source_updated: str | None = None
 
 
 def normalize_artifact_url(url: str) -> str:
@@ -151,6 +156,41 @@ def _local_read(path: Path) -> str | None:
         return path.read_text(encoding="utf-8")
     except OSError:
         return None
+
+
+def _remote_source_updated() -> str | None:
+    """Return the ``YYYY-MM-DD`` date of the latest ArtiFinder-Data commit."""
+    body = download_file(f"https://api.github.com/repos/{ARTIFINDER_OWNER_REPO}/commits?per_page=1")
+    if not body:
+        return None
+    try:
+        commits = json.loads(body)
+        return str(commits[0]["commit"]["committer"]["date"])[:10]
+    except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+        return None
+
+
+def _local_source_updated(base: Path) -> str | None:
+    """Return the last-updated date of a local ArtiFinder-Data checkout.
+
+    Prefers the last git commit date; falls back to the newest YAML mtime.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(base), "log", "-1", "--format=%cs"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+    mtimes = [p.stat().st_mtime for p in base.rglob("*.yaml")]
+    if mtimes:
+        return datetime.fromtimestamp(max(mtimes), tz=timezone.utc).strftime("%Y-%m-%d")
+    return None
 
 
 def _parse_year_file(conf: str, area: str, year: int, raw_text: str) -> tuple[list[dict], int]:
@@ -271,7 +311,8 @@ def load_artifinder(
         len(counts),
         min_year,
     )
-    return ArtiFinderData(all_entries, counts)
+    source_updated = _local_source_updated(base) if base is not None else _remote_source_updated()
+    return ArtiFinderData(all_entries, counts, source_updated)
 
 
 def load_artifinder_data(
