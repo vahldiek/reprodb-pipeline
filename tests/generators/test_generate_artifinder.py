@@ -132,6 +132,15 @@ class TestGenerateArtifinderEndToEnd:
         assert summary["total_papers"] == 7
         assert set(summary["conferences"]) == {"USENIXSEC", "CCS"}
 
+        # The unmatched (non-AE) CCS paper becomes a marked search row.
+        se = json.loads((tmp_website / "_build" / "artifinder_search_entries.json").read_text())
+        assert len(se) == 1
+        assert se[0]["conference"] == "CCS"
+        assert se[0]["badges"] == []
+        assert se[0]["artifact_urls"] == []
+        assert se[0]["artifinder_urls"] == ["https://github.com/foo/bar"]
+        assert se[0]["authors"] == ["Someone Else"]
+
     def test_missing_artifacts_file_is_safe(self, tmp_website, _patch_loader):
         summary = g.generate_artifinder(str(tmp_website), min_year=2017)
         assert summary["total_matched_ae"] == 0

@@ -115,6 +115,7 @@ STAGES: tuple[Stage, ...] = (
             "_data/artifinder_summary.yml",
             "_data/artifinder_by_year.yml",
             "_data/artifinder_by_conference.yml",
+            "_build/artifinder_search_entries.json",
         ),
     ),
     Stage(

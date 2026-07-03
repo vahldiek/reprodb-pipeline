@@ -194,3 +194,45 @@ class TestGenerateSearchData:
         with open(out) as f:
             data = json.load(f)
         assert len(data) == 1
+
+    def test_appends_artifinder_only_entries(self, data_dir):
+        self._write(
+            data_dir,
+            "artifacts.json",
+            [
+                {
+                    "title": "AE Paper",
+                    "conference": "USENIXSEC",
+                    "category": "security",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "artifact_urls": ["https://github.com/a/b"],
+                },
+            ],
+        )
+        build = data_dir / "_build"
+        build.mkdir(parents=True, exist_ok=True)
+        (build / "artifinder_search_entries.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "title": "Discovered Only",
+                        "conference": "CCS",
+                        "category": "security",
+                        "year": 2022,
+                        "badges": [],
+                        "artifact_urls": [],
+                        "artifinder_urls": ["https://github.com/x/y"],
+                        "doi_url": "",
+                        "authors": ["Jane Doe"],
+                        "affiliations": [],
+                    }
+                ]
+            )
+        )
+        result = generate_search_data(str(data_dir))
+        titles = {e["title"] for e in result}
+        assert titles == {"AE Paper", "Discovered Only"}
+        disc = next(e for e in result if e["title"] == "Discovered Only")
+        assert disc["artifinder_urls"] == ["https://github.com/x/y"]
+        assert disc["badges"] == []

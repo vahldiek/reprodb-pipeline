@@ -31,7 +31,7 @@ from pathlib import Path
 from src.models.artifacts.artifacts import Artifact
 from src.scrapers.artifinder import DEFAULT_MIN_YEAR, load_artifinder
 from src.scrapers.repo_utils import _normalise_github_repo_url
-from src.utils.io.io import load_json, resolve_data_path, save_validated_json, save_yaml
+from src.utils.io.io import load_json, resolve_data_path, save_json, save_validated_json, save_yaml
 from src.utils.normalization.conference import normalize_name, normalize_title
 
 logger = logging.getLogger(__name__)
@@ -183,6 +183,38 @@ def _build_stats(counts: list[dict], records: list[dict]) -> tuple[dict, list[di
     return summary, by_year, by_conf
 
 
+def _build_search_entries(entries: list[dict], records: list[dict]) -> list[dict]:
+    """Build ``SearchEntry``-shaped rows for discovered papers that did NOT go
+    through artifact evaluation (so they are absent from artifacts.json).
+
+    These make the discovered artifacts appear in the site search, marked with
+    the ArtiFinder sign. They carry no badges and no AE ``artifact_urls``; the
+    link lives in ``artifinder_urls``. Records are aligned 1:1 with *entries*.
+    """
+    out: list[dict] = []
+    for entry, rec in zip(entries, records, strict=True):
+        if rec["matched_ae"]:
+            continue  # already represented by its AE artifact in search
+        page = entry.get("page_link") or ""
+        is_doi = "doi.org" in page
+        se: dict = {
+            "title": entry["title"].strip(),
+            "conference": entry["conference"],
+            "category": entry["category"],
+            "year": int(entry["year"]),
+            "badges": [],
+            "artifact_urls": [],
+            "artifinder_urls": [entry["discovered_artifact"]],
+            "doi_url": page if is_doi else "",
+            "authors": entry.get("authors", []),
+            "affiliations": [],
+        }
+        if page and not is_doi:
+            se["paper_url"] = page
+        out.append(se)
+    return out
+
+
 def generate_artifinder(
     data_dir: str,
     min_year: int | None = DEFAULT_MIN_YEAR,
@@ -193,6 +225,7 @@ def generate_artifinder(
     root = Path(data_dir)
     assets_data = root / "assets" / "data"
     jekyll_data = root / "_data"
+    build_dir = root / "_build"
 
     data = load_artifinder(conf_regex=conf_regex, min_year=min_year, local_dir=local_dir)
     if not data.entries:
@@ -207,10 +240,15 @@ def generate_artifinder(
     records = match_entries(data.entries, artifacts, authors_by_title)
 
     # Back-patch artifacts.json (only artifinder_urls were possibly added). This
-    # is the single place ArtiFinder links are persisted; the raw links stay in
-    # the upstream ArtiFinder-Data repo. The repo_stats stage reads the GitHub
-    # links directly from here.
+    # is the single place ArtiFinder links are persisted for AE papers; the raw
+    # links stay in the upstream ArtiFinder-Data repo. The repo_stats stage
+    # reads the GitHub links directly from here.
     save_validated_json(assets_data / "artifacts.json", artifacts, Artifact)
+
+    # Discovered papers that never went through AE become extra search rows so
+    # they are findable in the site search (marked, no badges, no scores).
+    search_entries = _build_search_entries(data.entries, records)
+    save_json(build_dir / "artifinder_search_entries.json", search_entries)
 
     # Website statistics (Jekyll _data) for the ArtiFinder discovery page.
     summary, by_year, by_conf = _build_stats(data.counts, records)
@@ -219,9 +257,10 @@ def generate_artifinder(
     save_yaml(jekyll_data / "artifinder_by_conference.yml", by_conf)
 
     logger.info(
-        "ArtiFinder: %d discovered links (%d matched to AE, %d GitHub), min_year=%s",
+        "ArtiFinder: %d discovered links (%d matched to AE, %d non-AE search rows, %d GitHub), min_year=%s",
         summary["total_discovered"],
         summary["total_matched_ae"],
+        len(search_entries),
         summary["github_count"],
         min_year,
     )

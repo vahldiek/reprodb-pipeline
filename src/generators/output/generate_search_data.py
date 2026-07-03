@@ -79,6 +79,23 @@ def generate_search_data(data_dir: str) -> list:
 
     merged.sort(key=lambda x: (-x["year"], x["conference"], x["title"]))
 
+    # Append ArtiFinder-only rows (discovered artifacts whose papers never went
+    # through AE, so they are absent from artifacts.json). They are marked in
+    # the UI and excluded from every statistic. De-duplicate against AE rows.
+    af_path = resolve_data_path(Path(data_dir), "artifinder_search_entries.json")
+    if af_path.exists():
+        seen = {(_title_key(e["title"]), e["conference"], e["year"]) for e in merged}
+        af_added = 0
+        for e in load_json(af_path, default=[]) or []:
+            key = (_title_key(e["title"]), e["conference"], e["year"])
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(e)
+            af_added += 1
+        merged.sort(key=lambda x: (-x["year"], x["conference"], x["title"]))
+        logger.info(f"search_data.json: appended {af_added} ArtiFinder-only entries")
+
     out_path = assets_data / "search_data.json"
     save_validated_json(out_path, merged, SearchEntry, indent=None)
 
