@@ -78,9 +78,16 @@ class TestMatchEntries:
 
 
 class TestAuthorIndex:
-    def test_author_key_normalises_accents_and_case(self):
-        assert g._author_key("Manuel Vögele") == "manuel vogele"
-        assert g._author_key("Anjo Vahldiek-Oberwagner") == "anjo vahldiek oberwagner"
+    def test_af_author_key_shared_vector(self):
+        # Shared test vector — keep in sync with afAuthorKey() in the website's
+        # reprodb-profile-page.js so the author-index keys stay byte-identical.
+        vector = {
+            "Manuel Vögele": "manuel vogele",
+            "Anjo Vahldiek-Oberwagner": "anjo vahldiek oberwagner",
+            "Jane  Q.  Doe": "jane q doe",
+        }
+        for name, expected in vector.items():
+            assert g._af_author_key(name) == expected
 
     def test_build_author_index_only_unmatched(self):
         entries = [

@@ -222,12 +222,19 @@ def _build_search_entries(entries: list[dict], records: list[dict]) -> list[dict
     return out
 
 
-def _author_key(name: str) -> str:
-    """Normalised author key shared with the profile-page JS (``afKey``).
+def _af_author_key(name: str) -> str:
+    """Normalised author key used to index discoveries per author.
 
-    Lower-cases, strips accents (NFKD + drop combining marks), and reduces to
-    single-spaced alphanumerics. Kept intentionally simple so the browser can
-    reproduce it exactly.
+    MUST produce byte-identical output to ``afAuthorKey()`` in the website's
+    ``assets/js/reprodb-profile-page.js`` (the profile page looks papers up by
+    this key). Lower-cases, strips accents (NFKD + drop combining marks), and
+    reduces to single-spaced alphanumerics. Kept intentionally simple so the
+    browser can reproduce it exactly.
+
+    Shared test vector (keep in sync with the JS comment + tests):
+        "Manuel Vögele"              -> "manuel vogele"
+        "Anjo Vahldiek-Oberwagner"   -> "anjo vahldiek oberwagner"
+        "Jane  Q.  Doe"              -> "jane q doe"
     """
     n = unicodedata.normalize("NFKD", name or "")
     n = "".join(c for c in n if not unicodedata.combining(c))
@@ -253,7 +260,7 @@ def _build_author_index(entries: list[dict], records: list[dict]) -> dict[str, l
             "authors": entry.get("authors", []),
         }
         for author in entry.get("authors", []):
-            key = _author_key(author)
+            key = _af_author_key(author)
             if key:
                 index[key].append(paper)
     return dict(index)
