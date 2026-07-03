@@ -59,13 +59,13 @@ STAGES: tuple[Stage, ...] = (
         name="repo_stats",
         module="src.generators.repository.generate_repo_stats",
         description="Generate repository statistics (stars, forks, etc.)",
-        depends_on=("statistics",),
+        depends_on=("statistics", "artifinder"),
         optional=True,
         # Hits the GitHub API for every artifact — by far the slowest stage.
         # The cache lets re-runs without input changes finish in <1s.
         # Per-URL disk caches expire after 30 days (CACHE_TTL_STATS), so
         # the stage-level TTL matches to ensure fresh API data.
-        inputs=("_data/all_results_cache.yml",),
+        inputs=("_data/all_results_cache.yml", "_build/artifinder_matched_urls.json"),
         ttl=30 * 86400,  # 30 days — re-run when per-URL caches expire
         outputs=(
             "_data/repo_stats.yml",
@@ -103,6 +103,20 @@ STAGES: tuple[Stage, ...] = (
             "assets/data/authors.json",
             "_build/paper_authors_map.json",
             "assets/data/papers.json",
+        ),
+    ),
+    Stage(
+        name="artifinder",
+        module="src.generators.artifinder.generate_artifinder",
+        description="Integrate ArtiFinder-discovered artifact links (no badges, excluded from scores)",
+        depends_on=("statistics", "author_stats"),
+        optional=True,
+        outputs=(
+            "assets/data/artifinder.json",
+            "_data/artifinder_summary.yml",
+            "_data/artifinder_by_year.yml",
+            "_data/artifinder_by_conference.yml",
+            "_build/artifinder_matched_urls.json",
         ),
     ),
     Stage(
@@ -153,7 +167,7 @@ STAGES: tuple[Stage, ...] = (
         name="search_data",
         module="src.generators.output.generate_search_data",
         description="Generate search index",
-        depends_on=("statistics", "author_stats"),
+        depends_on=("statistics", "author_stats", "artifinder"),
         outputs=("assets/data/search_data.json",),
     ),
     Stage(

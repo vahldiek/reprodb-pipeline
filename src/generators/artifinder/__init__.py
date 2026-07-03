@@ -1,0 +1,1 @@
+"""ArtiFinder integration generators."""

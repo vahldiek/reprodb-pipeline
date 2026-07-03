@@ -602,6 +602,36 @@ def _enrich_top_repos(aggregated: dict, all_results: dict, output_dir: Path | No
     logger.info(f"Enriched {enriched} top-repo entries with badges/authors")
 
 
+def _inject_artifinder_matched_urls(all_results: dict, output_dir: str | None) -> None:
+    """Add ArtiFinder-matched GitHub links to *all_results* for repo-stat collection.
+
+    Reads ``_build/artifinder_matched_urls.json`` (written by the artifinder
+    stage). Each record ``{conference, year, title, url}`` is appended as a
+    lightweight artifact entry under the ``<conf><year>`` key so the existing
+    stats-collection and de-duplication logic picks it up. No-op when the file
+    is absent (e.g. the optional artifinder stage did not run).
+    """
+    if not output_dir:
+        return
+    path = Path(output_dir) / "_build" / "artifinder_matched_urls.json"
+    if not path.exists():
+        return
+    records = load_json(path, default=[]) or []
+    added = 0
+    for rec in records:
+        url = rec.get("url", "")
+        conf = str(rec.get("conference", "")).lower()
+        year = rec.get("year")
+        if not url or not conf or year is None:
+            continue
+        key = f"{conf}{year}"
+        bucket = all_results.setdefault(key, [])
+        bucket.append({"title": rec.get("title", "Unknown"), "artifact_urls": [url]})
+        added += 1
+    if added:
+        logger.info(f"Injected {added} ArtiFinder-matched GitHub links for repository statistics")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate repository statistics.")
     parser.add_argument("--conf_regex", type=str, default=".*20[12][0-9]", help="Regex for conference names/years")
@@ -635,6 +665,12 @@ def main():
         logger.info(
             f"Found {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years"
         )
+
+    # Inject GitHub links that ArtiFinder matched to AE papers so they are
+    # counted in repository statistics (project policy: ArtiFinder links are
+    # excluded from every score, but a GitHub repo it discovers for a paper
+    # that *did* go through AE may be used for repo stats).
+    _inject_artifinder_matched_urls(all_results, args.output_dir)
 
     # Load existing repo stats from the website (historical data).
     # Only fetch stats for NEW artifacts not already in the historical data,

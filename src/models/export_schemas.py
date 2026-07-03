@@ -27,6 +27,7 @@ SCHEMA_REGISTRY: list[tuple[str, bool, str, str]] = [
     ("artifact_availability.schema.json", False, "src.models.artifacts.artifact_availability", "ArtifactAvailability"),
     ("artifact_citations.schema.json", True, "src.models.artifacts.artifact_citations", "ArtifactCitation"),
     ("artifacts.schema.json", True, "src.models.artifacts.artifacts", "Artifact"),
+    ("artifinder.schema.json", True, "src.models.artifacts.artifinder", "ArtiFinderEntry"),
     ("artifacts_by_conference.schema.json", True, "src.models.aggregates.artifacts_by_conference", "ConferenceEntry"),
     ("artifacts_by_year.schema.json", True, "src.models.aggregates.artifacts_by_year", "ArtifactsByYear"),
     ("author_index.schema.json", True, "src.models.authors.author_index", "AuthorIndexEntry"),

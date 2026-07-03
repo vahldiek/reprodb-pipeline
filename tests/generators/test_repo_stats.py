@@ -6,6 +6,7 @@ dicts and rolls them up into the final structure.
 """
 
 from src.generators.repository.generate_repo_stats import (
+    _inject_artifinder_matched_urls,
     _is_excluded_repo,
     aggregate_stats,
 )
@@ -195,3 +196,37 @@ class TestExcludedRepos:
     def test_is_excluded_repo_nonmatch(self):
         assert not _is_excluded_repo("https://github.com/user/my-artifact")
         assert not _is_excluded_repo("https://zenodo.org/record/12345")
+
+
+class TestInjectArtifinderMatchedUrls:
+    """The artifinder stage hands GitHub links to repo_stats via a JSON file."""
+
+    def test_injects_records_under_conf_year_key(self, tmp_path):
+        (tmp_path / "_build").mkdir()
+        (tmp_path / "_build" / "artifinder_matched_urls.json").write_text(
+            '[{"conference": "USENIXSEC", "year": 2023, "title": "P", "url": "https://github.com/a/b"}]'
+        )
+        all_results = {"usenixsec2023": [{"title": "Existing", "badges": []}]}
+        _inject_artifinder_matched_urls(all_results, str(tmp_path))
+        assert len(all_results["usenixsec2023"]) == 2
+        injected = all_results["usenixsec2023"][-1]
+        assert injected["artifact_urls"] == ["https://github.com/a/b"]
+
+    def test_creates_new_bucket_when_missing(self, tmp_path):
+        (tmp_path / "_build").mkdir()
+        (tmp_path / "_build" / "artifinder_matched_urls.json").write_text(
+            '[{"conference": "NDSS", "year": 2024, "title": "P", "url": "https://github.com/x/y"}]'
+        )
+        all_results = {}
+        _inject_artifinder_matched_urls(all_results, str(tmp_path))
+        assert all_results["ndss2024"][0]["artifact_urls"] == ["https://github.com/x/y"]
+
+    def test_missing_file_is_noop(self, tmp_path):
+        all_results = {"a2023": [{"title": "x"}]}
+        _inject_artifinder_matched_urls(all_results, str(tmp_path))
+        assert all_results == {"a2023": [{"title": "x"}]}
+
+    def test_none_output_dir_is_noop(self):
+        all_results = {}
+        _inject_artifinder_matched_urls(all_results, None)
+        assert all_results == {}

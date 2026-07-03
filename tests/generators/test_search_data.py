@@ -108,6 +108,44 @@ class TestGenerateSearchData:
         result = generate_search_data(str(data_dir))
         assert result[0]["authors"] == ["Haibo Chen"]
 
+    def test_artifinder_urls_passthrough(self, data_dir):
+        self._write(
+            data_dir,
+            "artifacts.json",
+            [
+                {
+                    "title": "Paper",
+                    "conference": "USENIXSEC",
+                    "category": "security",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "artifact_urls": ["https://github.com/a/b"],
+                    "artifinder_urls": ["https://github.com/found/by-artifinder"],
+                },
+            ],
+        )
+        result = generate_search_data(str(data_dir))
+        assert result[0]["artifinder_urls"] == ["https://github.com/found/by-artifinder"]
+
+    def test_no_artifinder_urls_key_when_empty(self, data_dir):
+        self._write(
+            data_dir,
+            "artifacts.json",
+            [
+                {
+                    "title": "Paper",
+                    "conference": "USENIXSEC",
+                    "category": "security",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "artifact_urls": [],
+                    "artifinder_urls": [],
+                },
+            ],
+        )
+        result = generate_search_data(str(data_dir))
+        assert "artifinder_urls" not in result[0]
+
     def test_sorted_by_year_desc(self, data_dir):
         self._write(
             data_dir,

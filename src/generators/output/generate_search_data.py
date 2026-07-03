@@ -68,6 +68,10 @@ def generate_search_data(data_dir: str) -> list:
             "authors": clean_authors,
             "affiliations": affiliations,
         }
+        # ArtiFinder-discovered links (not verified, no badges) travel alongside
+        # the AE artifact_urls so the UI can render an "Artifinder" marker.
+        if art.get("artifinder_urls"):
+            entry["artifinder_urls"] = art["artifinder_urls"]
         for optional_key in ("paper_id", "paper_url", "appendix_url", "award"):
             if art.get(optional_key):
                 entry[optional_key] = art[optional_key]

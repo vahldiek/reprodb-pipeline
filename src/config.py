@@ -26,6 +26,16 @@ class PipelineConfig:
     # ── Scraping / filtering ────────────────────────────────────────────
     conf_regex: str = r".*20[12][0-9]"
 
+    #: Earliest conference edition year to include from ArtiFinder-Data.
+    #: Artifact evaluation started around 2017; ArtiFinder links from earlier
+    #: editions have no AE counterpart, so they are excluded by default.
+    artifinder_min_year: int = 2017
+
+    #: Optional path to a local ArtiFinder-Data checkout. When set the loader
+    #: reads from disk instead of GitHub (useful for offline / reproducible
+    #: runs). Falls back to the ``REPRODB_ARTIFINDER_DIR`` env var otherwise.
+    artifinder_local_dir: str | None = None
+
     # ── Proxy settings ──────────────────────────────────────────────────
     http_proxy: str | None = None
     https_proxy: str | None = None
@@ -59,6 +69,8 @@ class PipelineConfig:
             "PIPELINE_LOG_DIR": "log_dir",
             "PIPELINE_DBLP_FILE": "dblp_file",
             "PIPELINE_CONF_REGEX": "conf_regex",
+            "PIPELINE_ARTIFINDER_MIN_YEAR": "artifinder_min_year",
+            "PIPELINE_ARTIFINDER_LOCAL_DIR": "artifinder_local_dir",
             "PIPELINE_DEPLOY": "deploy",
             "PIPELINE_SAVE_RESULTS": "save_results",
             "PIPELINE_PUSH": "push",
@@ -69,6 +81,8 @@ class PipelineConfig:
             if val is not None:
                 if attr in ("deploy", "save_results", "push", "refresh"):
                     kwargs[attr] = val.lower() in ("1", "true", "yes")
+                elif attr == "artifinder_min_year":
+                    kwargs[attr] = int(val)
                 else:
                     kwargs[attr] = val
 
