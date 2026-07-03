@@ -28,6 +28,7 @@ import re
 import unicodedata
 from collections import defaultdict
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from src.models.artifacts.artifacts import Artifact
@@ -37,6 +38,12 @@ from src.utils.io.io import load_json, resolve_data_path, save_json, save_valida
 from src.utils.normalization.conference import normalize_name, normalize_title
 
 logger = logging.getLogger(__name__)
+
+#: Minimum SequenceMatcher ratio for the fuzzy title fallback. Deliberately high
+#: (exact matching handles the bulk); this only recovers same-paper titles that
+#: differ by Unicode/LaTeX scraping artifacts or minor wording, and is further
+#: guarded by author overlap when both author lists are known.
+FUZZY_MIN_RATIO = 0.94
 
 
 def _author_key_set(authors: list[str]) -> set[str]:
@@ -65,39 +72,68 @@ def match_entries(
     Mutates matched ``artifacts`` in place to append ``artifinder_urls`` and
     returns the per-entry match records (used only to build the aggregates).
 
-    A match requires the same conference, the same year, an identical
-    normalised title, and — when author lists are known on both sides — at
-    least one shared normalised author name (guards against title collisions).
+    First pass: same conference + year + identical normalised title. Second
+    pass (fuzzy): for still-unmatched entries, the closest AE title in the same
+    conference+year with a :data:`FUZZY_MIN_RATIO` similarity, to recover
+    same-paper titles that differ by Unicode/LaTeX artifacts or minor wording.
+    Both passes reject a match when author lists are known on both sides but
+    share no author (guards against title collisions / different papers).
     """
-    # Index artifacts by (conference, year, normalized_title) → artifact dict.
+    # Index artifacts by (conference, year, normalized_title) and by (conf, year).
     artifact_index: dict[tuple[str, int, str], dict] = {}
+    by_conf_year: dict[tuple[str, int], list[tuple[str, dict]]] = defaultdict(list)
     for art_row in artifacts:
-        key = (
-            str(art_row.get("conference", "")).upper(),
-            int(art_row.get("year", 0)),
-            normalize_title(art_row.get("title", "")),
-        )
-        # Keep the first artifact for a given key (there should only be one).
-        artifact_index.setdefault(key, art_row)
+        conf = str(art_row.get("conference", "")).upper()
+        year = int(art_row.get("year", 0))
+        ant = normalize_title(art_row.get("title", ""))
+        artifact_index.setdefault((conf, year, ant), art_row)
+        by_conf_year[(conf, year)].append((ant, art_row))
+
+    def _authors_overlap_ok(entry_authors: set[str], ae_norm_title: str) -> bool:
+        """False only when both sides list authors but none overlap."""
+        art_authors = authors_by_title.get(ae_norm_title, set())
+        if entry_authors and art_authors:
+            return bool(entry_authors & art_authors)
+        return True
+
+    def _fuzzy_match(nt: str, conf: str, year: int, entry_authors: set[str]) -> dict | None:
+        """Return the best fuzzy-matching AE artifact in the same conf/year, or None."""
+        best_ratio, best_art, best_nt = 0.0, None, ""
+        for ant, art_row in by_conf_year.get((conf, year), ()):
+            if not ant:
+                continue
+            ratio = SequenceMatcher(None, nt, ant).ratio()
+            if ratio > best_ratio:
+                best_ratio, best_art, best_nt = ratio, art_row, ant
+        if best_art is not None and best_ratio >= FUZZY_MIN_RATIO and _authors_overlap_ok(entry_authors, best_nt):
+            return best_art
+        return None
 
     records: list[dict] = []
+    fuzzy_matched = 0
 
     for entry in entries:
         conf = str(entry["conference"]).upper()
         year = int(entry["year"])
         nt = normalize_title(entry["title"])
         url = entry["discovered_artifact"]
+        entry_authors = _author_key_set(entry.get("authors", []))
 
+        # First pass: exact normalised title.
         art = artifact_index.get((conf, year, nt))
         matched = False
-        if art is not None:
-            entry_authors = _author_key_set(entry.get("authors", []))
-            art_authors = authors_by_title.get(nt, set())
-            # Reject the match only when both sides list authors but none overlap.
-            if entry_authors and art_authors and not (entry_authors & art_authors):
-                art = None
-            else:
+        via_fuzzy = False
+        if art is not None and _authors_overlap_ok(entry_authors, nt):
+            matched = True
+        else:
+            art = None
+
+        # Second pass: fuzzy title within the same conference + year.
+        if art is None:
+            art = _fuzzy_match(nt, conf, year, entry_authors)
+            if art is not None:
                 matched = True
+                via_fuzzy = True
 
         records.append(
             {
@@ -109,11 +145,16 @@ def match_entries(
         )
 
         if matched and art is not None:
+            if via_fuzzy:
+                fuzzy_matched += 1
             existing = set(art.get("artifact_urls", [])) | set(art.get("artifinder_urls", []))
             # Compare on a scheme-insensitive / trailing-slash-insensitive basis.
             norm_existing = {u.rstrip("/") for u in existing}
             if url.rstrip("/") not in norm_existing:
                 art.setdefault("artifinder_urls", []).append(url)
+
+    if fuzzy_matched:
+        logger.info("  ArtiFinder: %d links matched to AE papers via fuzzy title fallback", fuzzy_matched)
 
     return records
 

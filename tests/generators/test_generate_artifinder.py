@@ -70,6 +70,32 @@ class TestMatchEntries:
         assert records[0]["matched_ae"] is True
         assert artifacts[0].get("artifinder_urls", []) == []  # already present, not duplicated
 
+    def test_fuzzy_matches_same_paper_minor_title_diff(self):
+        # AE title has a LaTeX/Unicode artifact ("kk"); ArtiFinder has the clean form.
+        artifacts = [_artifact("USENIXSEC", 2025, "FastLloyd: Tunable kk-Means.", ["available"], [], paper_id=3)]
+        entries = [_entry("USENIXSEC", 2025, "FastLloyd: Tunable k-Means.", ["Jane Doe"], "https://github.com/x/y")]
+        authors_by_title = {g.normalize_title("FastLloyd: Tunable kk-Means."): {g.normalize_name("Jane Doe")}}
+        records = g.match_entries(entries, artifacts, authors_by_title)
+        assert records[0]["matched_ae"] is True
+        assert artifacts[0]["artifinder_urls"] == ["https://github.com/x/y"]
+
+    def test_fuzzy_rejects_different_paper_no_author_overlap(self):
+        # Similar title but disjoint authors -> must NOT match.
+        artifacts = [_artifact("USENIXSEC", 2025, "Attacking the Foo Protocol.", ["available"], [], paper_id=4)]
+        entries = [_entry("USENIXSEC", 2025, "Attacking the Bar Protocol.", ["Someone Else"], "https://github.com/x/y")]
+        authors_by_title = {g.normalize_title("Attacking the Foo Protocol."): {g.normalize_name("Original Author")}}
+        records = g.match_entries(entries, artifacts, authors_by_title)
+        assert records[0]["matched_ae"] is False
+        assert artifacts[0].get("artifinder_urls", []) == []
+
+    def test_fuzzy_below_threshold_not_matched(self):
+        artifacts = [
+            _artifact("NDSS", 2024, "A Completely Different Title About Networks.", ["available"], [], paper_id=5)
+        ]
+        entries = [_entry("NDSS", 2024, "Something Entirely Unrelated Here.", [], "https://github.com/x/y")]
+        records = g.match_entries(entries, artifacts, {})
+        assert records[0]["matched_ae"] is False
+
     def test_badges_never_changed(self):
         artifacts = [_artifact("NDSS", 2023, "Paper.", ["available", "functional"], [], paper_id=1)]
         entries = [_entry("NDSS", 2023, "Paper.", [], "https://github.com/x/y")]
