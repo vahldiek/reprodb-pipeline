@@ -350,6 +350,11 @@ def generate_artifinder(
 
     # Website statistics (Jekyll _data) for the ArtiFinder discovery page.
     summary, by_year, by_conf = _build_stats(data.counts, records, data.source_updated)
+    # Distinct authors across all discovered-artifact entries (analogous to the
+    # AE "total authors" figure shown on the methodology page).
+    summary["author_count"] = len(
+        {_af_author_key(a) for e in data.entries for a in e.get("authors", []) if _af_author_key(a)}
+    )
     save_yaml(jekyll_data / "artifinder_summary.yml", summary)
     save_yaml(jekyll_data / "artifinder_by_year.yml", by_year)
     save_yaml(jekyll_data / "artifinder_by_conference.yml", by_conf)
