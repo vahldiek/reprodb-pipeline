@@ -15,6 +15,7 @@ from src.models.aggregates.repo_stats import (
     RepoStatsSummary,
 )
 from src.models.aggregates.summary import Summary
+from src.models.artifacts.artifacts import Artifact
 from src.models.artifacts.paper_index import Paper
 from src.models.artifacts.search_data import SearchEntry
 from src.models.authors.author_index import AffiliationHistoryEntry, AuthorIndexEntry, ExternalIds
@@ -364,6 +365,44 @@ class TestSearchEntry:
                 authors=[],
                 affiliations=[],
             )
+
+    def test_artifinder_urls_default_empty(self):
+        se = SearchEntry(
+            title="P",
+            conference="NDSS",
+            category="security",
+            year=2023,
+            badges=[],
+            artifact_urls=[],
+            doi_url="",
+            authors=[],
+            affiliations=[],
+        )
+        assert se.artifinder_urls == []
+
+
+# ── Artifact & ArtiFinder ────────────────────────────────────────
+
+
+class TestArtifactArtifinderUrls:
+    def _make(self, **overrides):
+        defaults = dict(
+            conference="USENIXSEC",
+            category="security",
+            year=2023,
+            title="Paper",
+            badges=["available"],
+            artifact_urls=["https://github.com/a/b"],
+        )
+        defaults.update(overrides)
+        return Artifact(**defaults)
+
+    def test_default_empty(self):
+        assert self._make().artifinder_urls == []
+
+    def test_accepts_list(self):
+        art = self._make(artifinder_urls=["https://github.com/found/repo"])
+        assert art.artifinder_urls == ["https://github.com/found/repo"]
 
 
 # ── Paper (paper_index) ───────────────────────────────────────────

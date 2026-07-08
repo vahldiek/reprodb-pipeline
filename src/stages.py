@@ -59,13 +59,13 @@ STAGES: tuple[Stage, ...] = (
         name="repo_stats",
         module="src.generators.repository.generate_repo_stats",
         description="Generate repository statistics (stars, forks, etc.)",
-        depends_on=("statistics",),
+        depends_on=("statistics", "artifinder"),
         optional=True,
         # Hits the GitHub API for every artifact — by far the slowest stage.
         # The cache lets re-runs without input changes finish in <1s.
         # Per-URL disk caches expire after 30 days (CACHE_TTL_STATS), so
         # the stage-level TTL matches to ensure fresh API data.
-        inputs=("_data/all_results_cache.yml",),
+        inputs=("_data/all_results_cache.yml", "assets/data/artifacts.json"),
         ttl=30 * 86400,  # 30 days — re-run when per-URL caches expire
         outputs=(
             "_data/repo_stats.yml",
@@ -103,6 +103,26 @@ STAGES: tuple[Stage, ...] = (
             "assets/data/authors.json",
             "_build/paper_authors_map.json",
             "assets/data/papers.json",
+        ),
+    ),
+    Stage(
+        name="artifinder",
+        module="src.generators.artifinder.generate_artifinder",
+        description="Integrate ArtiFinder-discovered artifact links (no badges, excluded from scores)",
+        depends_on=("statistics", "author_stats"),
+        optional=True,
+        # Participate in the content-hash skip cache: re-run when the AE
+        # artifacts or the author map change. The remote ArtiFinder-Data set is
+        # fetched through the shared HTTP cache, and the day-long TTL bounds how
+        # often we re-pull it even when local inputs are unchanged.
+        inputs=("assets/data/artifacts.json", "_build/paper_authors_map.json"),
+        ttl=86400,  # 1 day — refresh discovered links daily at most
+        outputs=(
+            "_data/artifinder_summary.yml",
+            "_data/artifinder_by_year.yml",
+            "_data/artifinder_by_conference.yml",
+            "assets/data/artifinder_authors.json",
+            "_build/artifinder_search_entries.json",
         ),
     ),
     Stage(
@@ -153,7 +173,7 @@ STAGES: tuple[Stage, ...] = (
         name="search_data",
         module="src.generators.output.generate_search_data",
         description="Generate search index",
-        depends_on=("statistics", "author_stats"),
+        depends_on=("statistics", "author_stats", "artifinder"),
         outputs=("assets/data/search_data.json",),
     ),
     Stage(

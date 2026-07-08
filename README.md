@@ -46,7 +46,7 @@ python -m src.orchestrator --deploy   # writes directly to ../reprodb.github.io
 
 ## What the Pipeline Does
 
-The pipeline runs **15 stages** organised in dependency tiers (see `src/stages.py`):
+The pipeline runs **16 stages** organised in dependency tiers (see `src/stages.py`):
 
 | # | Stage | Key script |
 |---|-------|-----------|
@@ -57,6 +57,7 @@ The pipeline runs **15 stages** organised in dependency tiers (see `src/stages.p
 | 3b | Check artifact URL liveness | `generate_artifact_availability.py` |
 | 3c | Compute AE participation rates against DBLP paper counts | `generate_participation_stats.py` |
 | 4 | Match authors via DBLP, compute author metrics | `generate_author_stats.py` |
+| 4b | *(optional)* Integrate ArtiFinder-discovered artifact links | `artifinder/generate_artifinder.py` |
 | 5 | Split author data into per-area files | `generate_area_authors.py` |
 | 6 | Committee statistics | `generate_committee_stats.py` |
 | 7 | Combined multi-source rankings | `generate_combined_rankings.py` |
@@ -67,8 +68,34 @@ The pipeline runs **15 stages** organised in dependency tiers (see `src/stages.p
 | 12 | SVG chart generation | `generate_visualizations.py` |
 | 13 | *(optional)* Paper citation counts via OpenAlex/Semantic Scholar | `generate_paper_citations_doi.py` |
 
-> Stages 1b, 3b, 3c, and 13 are optional and will be skipped when their
-> prerequisites (e.g. DBLP file) are unavailable.
+> Stages 1b, 3b, 3c, 4b, and 13 are optional and will be skipped when their
+> prerequisites (e.g. DBLP file, network access) are unavailable.
+
+### ArtiFinder integration (stage 4b)
+
+[ArtiFinder](https://github.com/DistriNet/ArtiFinder) scrapes conference papers
+directly and discovers links to their artifacts. Stage 4b ingests the published
+[ArtiFinder-Data](https://github.com/DistriNet/ArtiFinder-Data) set and matches
+each discovered link to a paper by **normalised title + author list** (same
+conference and year). Matched AE artifacts gain an `artifinder_urls` field.
+
+ArtiFinder links are **not manually verified**, carry **no badges**, and are
+**excluded from every score** (artifact rate, reproducibility rate, combined
+score, rankings). The list also contains papers that never went through AE. The
+sole exception is repository statistics: a **GitHub** repo that ArtiFinder finds
+for a paper that *did* go through AE may be counted there.
+
+Configuration:
+
+| Option | Env var | Default | Meaning |
+|---|---|---|---|
+| `artifinder_min_year` | `PIPELINE_ARTIFINDER_MIN_YEAR` | `2017` | Earliest conference edition year to ingest (AE era). |
+| `artifinder_local_dir` | `PIPELINE_ARTIFINDER_LOCAL_DIR` | *(unset)* | Path to a local ArtiFinder-Data checkout; skips network access. Also honours `REPRODB_ARTIFINDER_DIR`. |
+
+Outputs: back-patched `artifinder_urls` on matched artifacts in `assets/data/artifacts.json`
+and Jekyll aggregates `_data/artifinder_{summary,by_year,by_conference}.yml` for the discovery
+page. The `repo_stats` stage reads the matched GitHub links directly from `artifacts.json`. The
+raw discovered links stay in the upstream ArtiFinder-Data repository and are not republished here.
 
 ---
 

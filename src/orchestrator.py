@@ -54,6 +54,13 @@ def _stage_args(stage: Stage, cfg: PipelineConfig) -> list[str]:
         "artifact_availability": ["--conf_regex", regex, "--output_dir", out],
         "participation_stats": ["--dblp_file", dblp, "--output_dir", out],
         "author_stats": ["--dblp_file", dblp, "--data_dir", out, "--output_dir", out],
+        "artifinder": [
+            "--data_dir",
+            out,
+            "--min_year",
+            str(cfg.artifinder_min_year),
+            *(["--local_dir", cfg.artifinder_local_dir] if cfg.artifinder_local_dir else []),
+        ],
         "area_authors": ["--data_dir", out],
         "committee_stats": ["--conf_regex", regex, "--output_dir", out],
         "combined_rankings": ["--data_dir", out],

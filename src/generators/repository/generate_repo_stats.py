@@ -602,6 +602,39 @@ def _enrich_top_repos(aggregated: dict, all_results: dict, output_dir: Path | No
     logger.info(f"Enriched {enriched} top-repo entries with badges/authors")
 
 
+def _inject_artifinder_urls(all_results: dict, output_dir: str | None) -> None:
+    """Add ArtiFinder-discovered GitHub links to *all_results* for repo-stats.
+
+    Reads ``assets/data/artifacts.json`` (back-patched by the artifinder stage
+    with an ``artifinder_urls`` list). For each AE artifact, its GitHub
+    ArtiFinder links are appended as lightweight entries under the
+    ``<conf><year>`` key so the existing stats-collection and de-duplication
+    logic picks them up. Project policy: ArtiFinder links are excluded from all
+    scores, but a GitHub repo discovered for a paper that *did* go through AE
+    may be counted in repository statistics. No-op when the file is absent.
+    """
+    if not output_dir:
+        return
+    path = Path(output_dir) / "assets" / "data" / "artifacts.json"
+    if not path.exists():
+        return
+    artifacts = load_json(path, default=[]) or []
+    added = 0
+    for art in artifacts:
+        conf = str(art.get("conference", "")).lower()
+        year = art.get("year")
+        if not conf or year is None:
+            continue
+        for url in art.get("artifinder_urls", []):
+            if "github.com/" not in url:
+                continue
+            key = f"{conf}{year}"
+            all_results.setdefault(key, []).append({"title": art.get("title", "Unknown"), "artifact_urls": [url]})
+            added += 1
+    if added:
+        logger.info(f"Injected {added} ArtiFinder-discovered GitHub links for repository statistics")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate repository statistics.")
     parser.add_argument("--conf_regex", type=str, default=".*20[12][0-9]", help="Regex for conference names/years")
@@ -635,6 +668,12 @@ def main():
         logger.info(
             f"Found {sum(len(v) for v in all_results.values())} artifacts across {len(all_results)} conference-years"
         )
+
+    # Inject GitHub links that ArtiFinder matched to AE papers so they are
+    # counted in repository statistics (project policy: ArtiFinder links are
+    # excluded from every score, but a GitHub repo it discovers for a paper
+    # that *did* go through AE may be used for repo stats).
+    _inject_artifinder_urls(all_results, args.output_dir)
 
     # Load existing repo stats from the website (historical data).
     # Only fetch stats for NEW artifacts not already in the historical data,

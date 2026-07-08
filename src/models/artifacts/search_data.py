@@ -31,6 +31,14 @@ class SearchEntry(BaseModel):
         description="Artifact URLs (repos, archives, DOIs), e.g. ['https://github.com/org/repo', 'https://doi.org/10.5281/zenodo.12345'].",
         examples=[["https://github.com/org/repo", "https://doi.org/10.5281/zenodo.12345"]],
     )
+    artifinder_urls: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Artifact URLs discovered by ArtiFinder and matched to this paper. Not manually verified, "
+            "no badges, excluded from all scores. Shown in the UI with an 'Artifinder' marker."
+        ),
+        examples=[["https://github.com/org/discovered-repo"]],
+    )
     doi_url: str = Field(
         description="Paper DOI URL, e.g. 'https://doi.org/10.1145/...'. Empty string if not available.",
         examples=["https://doi.org/10.1145/3600006.3613152"],
@@ -63,6 +71,15 @@ class SearchEntry(BaseModel):
         default=None,
         description="Award designation such as 'Distinguished Artifact'. Null if no award.",
         examples=["Distinguished Artifact"],
+    )
+    source: Literal["ae", "artifinder"] = Field(
+        default="ae",
+        description=(
+            "Provenance of the entry: 'ae' for papers that went through artifact evaluation "
+            "(they may still carry additional artifinder_urls), or 'artifinder' for papers that "
+            "were only discovered by ArtiFinder and never went through AE (no badges, no scores)."
+        ),
+        examples=["ae"],
     )
 
     model_config = {"extra": "forbid"}

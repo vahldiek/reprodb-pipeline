@@ -108,6 +108,44 @@ class TestGenerateSearchData:
         result = generate_search_data(str(data_dir))
         assert result[0]["authors"] == ["Haibo Chen"]
 
+    def test_artifinder_urls_passthrough(self, data_dir):
+        self._write(
+            data_dir,
+            "artifacts.json",
+            [
+                {
+                    "title": "Paper",
+                    "conference": "USENIXSEC",
+                    "category": "security",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "artifact_urls": ["https://github.com/a/b"],
+                    "artifinder_urls": ["https://github.com/found/by-artifinder"],
+                },
+            ],
+        )
+        result = generate_search_data(str(data_dir))
+        assert result[0]["artifinder_urls"] == ["https://github.com/found/by-artifinder"]
+
+    def test_no_artifinder_urls_key_when_empty(self, data_dir):
+        self._write(
+            data_dir,
+            "artifacts.json",
+            [
+                {
+                    "title": "Paper",
+                    "conference": "USENIXSEC",
+                    "category": "security",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "artifact_urls": [],
+                    "artifinder_urls": [],
+                },
+            ],
+        )
+        result = generate_search_data(str(data_dir))
+        assert "artifinder_urls" not in result[0]
+
     def test_sorted_by_year_desc(self, data_dir):
         self._write(
             data_dir,
@@ -156,3 +194,49 @@ class TestGenerateSearchData:
         with open(out) as f:
             data = json.load(f)
         assert len(data) == 1
+
+    def test_appends_artifinder_only_entries(self, data_dir):
+        self._write(
+            data_dir,
+            "artifacts.json",
+            [
+                {
+                    "title": "AE Paper",
+                    "conference": "USENIXSEC",
+                    "category": "security",
+                    "year": 2023,
+                    "badges": ["available"],
+                    "artifact_urls": ["https://github.com/a/b"],
+                },
+            ],
+        )
+        build = data_dir / "_build"
+        build.mkdir(parents=True, exist_ok=True)
+        (build / "artifinder_search_entries.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "title": "Discovered Only",
+                        "conference": "CCS",
+                        "category": "security",
+                        "year": 2022,
+                        "badges": [],
+                        "artifact_urls": [],
+                        "artifinder_urls": ["https://github.com/x/y"],
+                        "doi_url": "",
+                        "authors": ["Jane Doe"],
+                        "affiliations": [],
+                        "source": "artifinder",
+                    }
+                ]
+            )
+        )
+        result = generate_search_data(str(data_dir))
+        titles = {e["title"] for e in result}
+        assert titles == {"AE Paper", "Discovered Only"}
+        disc = next(e for e in result if e["title"] == "Discovered Only")
+        assert disc["artifinder_urls"] == ["https://github.com/x/y"]
+        assert disc["badges"] == []
+        assert disc["source"] == "artifinder"
+        ae = next(e for e in result if e["title"] == "AE Paper")
+        assert ae["source"] == "ae"

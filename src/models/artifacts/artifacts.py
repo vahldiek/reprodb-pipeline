@@ -48,6 +48,16 @@ class Artifact(BaseModel):
         ),
         examples=[["https://github.com/org/repo", "https://doi.org/10.5281/zenodo.12345"]],
     )
+    artifinder_urls: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Artifact URLs discovered automatically by ArtiFinder (https://github.com/DistriNet/ArtiFinder) "
+            "and matched to this paper by title + author list. These links were NOT manually verified by an "
+            "artifact evaluation committee, carry no badges, and do not contribute to any artifact/reproducibility "
+            "score. They may, however, be used for repository statistics when they point to a GitHub repo."
+        ),
+        examples=[["https://github.com/org/discovered-repo"]],
+    )
     doi: str = Field(
         default="",
         description="Canonical artifact DOI extracted from artifact_urls, e.g. '10.5281/zenodo.12345'. Empty string if none found.",
