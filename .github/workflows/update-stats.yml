@@ -95,6 +95,13 @@ jobs:
           python -m src.generators.output.generate_statistics \
             --conf_regex '.*20[12][0-9]' \
             --output_dir ../website/src
+
+      - name: Generate ArtiFinder integration
+        run: |
+          cd reprodb-pipeline
+          python -m src.generators.artifinder.generate_artifinder \
+            --data_dir ../website/src \
+            --min_year 2017
       
       - name: Generate repository statistics
         timeout-minutes: 120
@@ -253,6 +260,7 @@ jobs:
           ls -lh website/src/_data/
           ls -lh website/src/assets/data/ || true
           ls -lh website/src/assets/charts/ || true
+          ls -lh website/src/_build/ || true
           echo "Files generated successfully!"
       
       - name: Validate output against JSON schemas
