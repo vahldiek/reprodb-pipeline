@@ -404,6 +404,10 @@ class TestArtifactArtifinderUrls:
         art = self._make(artifinder_urls=["https://github.com/found/repo"])
         assert art.artifinder_urls == ["https://github.com/found/repo"]
 
+    def test_non_string_paper_url_is_normalized_to_none(self):
+        art = self._make(paper_url=54)
+        assert art.paper_url is None
+
 
 # ── Paper (paper_index) ───────────────────────────────────────────
 
