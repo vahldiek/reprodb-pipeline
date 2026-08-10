@@ -92,6 +92,17 @@ class Artifact(BaseModel):
             return str(v).lower()
         return v  # type: ignore[return-value]
 
+    @field_validator("paper_url", "appendix_url", mode="before")
+    @classmethod
+    def _normalize_optional_url(cls, v: object) -> str | None:
+        """Drop malformed URL-like values instead of failing whole artifact validation."""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            normalized = v.strip()
+            return normalized or None
+        return None
+
     model_config = {"extra": "forbid"}
 
 
