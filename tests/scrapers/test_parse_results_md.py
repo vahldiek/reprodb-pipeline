@@ -1,9 +1,9 @@
 """Tests for src/scrapers/parse_results_md — HTML/markdown and YAML normalization."""
 
 from src.scrapers.parse_results_md import (
-        _normalize_yaml_artifact_urls,
-        parse_html_results,
-        parse_markdown_table_results,
+    _normalize_yaml_artifact_urls,
+    parse_html_results,
+    parse_markdown_table_results,
 )
 
 
@@ -120,6 +120,7 @@ class TestParseMarkdownTableResults:
         md = "| No Link Here | <span>AVAILABLE</span> | |"
         result = parse_markdown_table_results(md)
         assert len(result) == 0
+
 
 class TestYamlArtifactUrlNormalization:
     def test_splits_space_separated_artifact_url(self):
