@@ -1,6 +1,10 @@
-"""Tests for src/scrapers/parse_results_md — HTML and markdown table parsers."""
+"""Tests for src/scrapers/parse_results_md — HTML/markdown and YAML normalization."""
 
-from src.scrapers.parse_results_md import parse_html_results, parse_markdown_table_results
+from src.scrapers.parse_results_md import (
+        _normalize_yaml_artifact_urls,
+        parse_html_results,
+        parse_markdown_table_results,
+)
 
 
 class TestParseHtmlResults:
@@ -116,3 +120,36 @@ class TestParseMarkdownTableResults:
         md = "| No Link Here | <span>AVAILABLE</span> | |"
         result = parse_markdown_table_results(md)
         assert len(result) == 0
+
+class TestYamlArtifactUrlNormalization:
+    def test_splits_space_separated_artifact_url(self):
+        artifact = {
+            "title": "Measuring Popularity Of Cryptographic Libraries In Internet-wide Scans",
+            "artifact_url": "https://crocs.fi.muni.cz/public/papers/acsac2017 https://github.com/crocs-muni/classifyRSAkey",
+        }
+
+        normalized = _normalize_yaml_artifact_urls(artifact)
+
+        assert normalized["artifact_url"] == "https://crocs.fi.muni.cz/public/papers/acsac2017"
+        assert normalized["artifact_urls"] == [
+            "https://crocs.fi.muni.cz/public/papers/acsac2017",
+            "https://github.com/crocs-muni/classifyRSAkey",
+        ]
+
+    def test_keeps_existing_artifact_urls_and_deduplicates(self):
+        artifact = {
+            "artifact_urls": [
+                "https://github.com/example/repo",
+                "https://doi.org/10.5281/zenodo.123",
+            ],
+            "artifact_url": "https://github.com/example/repo https://gitlab.com/example/repo",
+        }
+
+        normalized = _normalize_yaml_artifact_urls(artifact)
+
+        assert normalized["artifact_urls"] == [
+            "https://github.com/example/repo",
+            "https://doi.org/10.5281/zenodo.123",
+            "https://gitlab.com/example/repo",
+        ]
+        assert normalized["artifact_url"] == "https://github.com/example/repo"

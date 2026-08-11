@@ -24,6 +24,58 @@ logger = logging.getLogger(__name__)
 RESULTS_FILENAMES = ["results.md", "result.md"]
 
 
+def _extract_http_urls(raw: str) -> list[str]:
+    """Extract one or more HTTP(S) URLs from a raw scalar string.
+
+    Some conference sources place multiple URLs in one YAML scalar separated by
+    spaces. This helper splits them while keeping valid URL characters.
+    """
+    if not isinstance(raw, str):
+        return []
+    urls = re.findall(r"https?://[^\s]+", raw)
+    # Strip common trailing punctuation from surrounding prose/markdown.
+    return [u.rstrip(").,;>") for u in urls]
+
+
+def _normalize_yaml_artifact_urls(artifact: dict) -> dict:
+    """Normalize URL fields in one artifact dict.
+
+    Ensures malformed space-separated URL scalars are represented as canonical
+    ``artifact_urls`` lists while keeping ``artifact_url`` for compatibility.
+    """
+    if not isinstance(artifact, dict):
+        return artifact
+
+    out = dict(artifact)
+
+    # Start with any existing list-style URLs.
+    canonical_urls: list[str] = []
+    existing = out.get("artifact_urls", [])
+    if isinstance(existing, list):
+        for item in existing:
+            if isinstance(item, str):
+                canonical_urls.extend(_extract_http_urls(item))
+
+    # Merge legacy single-value field (which may contain multiple URLs).
+    legacy = out.get("artifact_url", "")
+    if isinstance(legacy, str):
+        canonical_urls.extend(_extract_http_urls(legacy))
+
+    # Deduplicate while preserving order.
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for u in canonical_urls:
+        if u and u not in seen:
+            seen.add(u)
+            deduped.append(u)
+
+    if deduped:
+        out["artifact_urls"] = deduped
+        out["artifact_url"] = deduped[0]
+
+    return out
+
+
 def parse_html_results(content):
     """
     Parse HTML-table-based results pages (used by OSDI, ATC, etc.).
@@ -224,14 +276,19 @@ def get_ae_results(conference_regex, prefix):
             try:
                 parsed_content = yaml.safe_load(yaml_part)
                 if parsed_content and "artifacts" in parsed_content:
-                    parsed_results[conf_year] = parsed_content["artifacts"]
+                    artifacts = parsed_content["artifacts"]
+                    if isinstance(artifacts, list):
+                        artifacts = [_normalize_yaml_artifact_urls(a) for a in artifacts]
+                    parsed_results[conf_year] = artifacts
                     logger.info(f"  {conf_year}: parsed {len(parsed_content['artifacts'])} artifacts (YAML)")
                     continue
                 if parsed_content and "issues" in parsed_content:
                     # PETS-style: artifacts nested under issues list
                     all_artifacts = []
                     for issue in parsed_content["issues"]:
-                        all_artifacts.extend(issue.get("artifacts", []))
+                        raw_artifacts = issue.get("artifacts", [])
+                        if isinstance(raw_artifacts, list):
+                            all_artifacts.extend(_normalize_yaml_artifact_urls(a) for a in raw_artifacts)
                     if all_artifacts:
                         parsed_results[conf_year] = all_artifacts
                         logger.info(f"  {conf_year}: parsed {len(all_artifacts)} artifacts (YAML/issues)")
